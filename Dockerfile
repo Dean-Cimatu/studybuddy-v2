@@ -1,5 +1,5 @@
 # ---- Stage 1: deps ----
-FROM node:20-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # ---- Stage 3: runtime ----
-FROM node:20-alpine AS runtime
+FROM node:25-alpine AS runtime
 WORKDIR /app
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup -u 1001
