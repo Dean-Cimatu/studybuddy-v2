@@ -1,13 +1,10 @@
 import { useState, FormEvent } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-interface Props {
-  onSuccess: () => void;
-  onNavigateLogin: () => void;
-}
-
-export function RegisterPage({ onSuccess, onNavigateLogin }: Props) {
+export function RegisterPage() {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -20,7 +17,7 @@ export function RegisterPage({ onSuccess, onNavigateLogin }: Props) {
     setSubmitting(true);
     try {
       await register(email, password, displayName);
-      onSuccess();
+      void navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -43,11 +40,8 @@ export function RegisterPage({ onSuccess, onNavigateLogin }: Props) {
               {error}
             </p>
           )}
-
           <div>
-            <label htmlFor="displayName" className="block text-sm text-gray-400 mb-1">
-              Display name
-            </label>
+            <label htmlFor="displayName" className="block text-sm text-gray-400 mb-1">Display name</label>
             <input
               id="displayName"
               type="text"
@@ -59,11 +53,8 @@ export function RegisterPage({ onSuccess, onNavigateLogin }: Props) {
               placeholder="Your name"
             />
           </div>
-
           <div>
-            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">Email</label>
             <input
               id="email"
               type="email"
@@ -75,11 +66,9 @@ export function RegisterPage({ onSuccess, onNavigateLogin }: Props) {
               placeholder="you@example.com"
             />
           </div>
-
           <div>
             <label htmlFor="password" className="block text-sm text-gray-400 mb-1">
-              Password
-              <span className="text-gray-600 ml-1">(min 8 characters)</span>
+              Password <span className="text-gray-600">(min 8 characters)</span>
             </label>
             <input
               id="password"
@@ -93,7 +82,6 @@ export function RegisterPage({ onSuccess, onNavigateLogin }: Props) {
               placeholder="••••••••"
             />
           </div>
-
           <button
             type="submit"
             disabled={submitting}
@@ -105,12 +93,9 @@ export function RegisterPage({ onSuccess, onNavigateLogin }: Props) {
 
         <p className="text-gray-500 text-sm text-center mt-6">
           Already have an account?{' '}
-          <button
-            onClick={onNavigateLogin}
-            className="text-indigo-400 hover:text-indigo-300 transition-colors"
-          >
+          <Link to="/login" className="text-indigo-400 hover:text-indigo-300 transition-colors">
             Sign in
-          </button>
+          </Link>
         </p>
       </div>
     </div>

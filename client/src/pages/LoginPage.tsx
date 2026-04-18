@@ -1,13 +1,10 @@
 import { useState, FormEvent } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-interface Props {
-  onSuccess: () => void;
-  onNavigateRegister: () => void;
-}
-
-export function LoginPage({ onSuccess, onNavigateRegister }: Props) {
+export function LoginPage() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,7 +16,7 @@ export function LoginPage({ onSuccess, onNavigateRegister }: Props) {
     setSubmitting(true);
     try {
       await login(email, password);
-      onSuccess();
+      void navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -42,11 +39,8 @@ export function LoginPage({ onSuccess, onNavigateRegister }: Props) {
               {error}
             </p>
           )}
-
           <div>
-            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">Email</label>
             <input
               id="email"
               type="email"
@@ -58,11 +52,8 @@ export function LoginPage({ onSuccess, onNavigateRegister }: Props) {
               placeholder="you@example.com"
             />
           </div>
-
           <div>
-            <label htmlFor="password" className="block text-sm text-gray-400 mb-1">
-              Password
-            </label>
+            <label htmlFor="password" className="block text-sm text-gray-400 mb-1">Password</label>
             <input
               id="password"
               type="password"
@@ -74,7 +65,6 @@ export function LoginPage({ onSuccess, onNavigateRegister }: Props) {
               placeholder="••••••••"
             />
           </div>
-
           <button
             type="submit"
             disabled={submitting}
@@ -86,12 +76,9 @@ export function LoginPage({ onSuccess, onNavigateRegister }: Props) {
 
         <p className="text-gray-500 text-sm text-center mt-6">
           No account?{' '}
-          <button
-            onClick={onNavigateRegister}
-            className="text-indigo-400 hover:text-indigo-300 transition-colors"
-          >
+          <Link to="/register" className="text-indigo-400 hover:text-indigo-300 transition-colors">
             Create one
-          </button>
+          </Link>
         </p>
       </div>
     </div>
