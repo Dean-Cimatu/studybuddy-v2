@@ -83,6 +83,40 @@ npm run dev -w client   # http://localhost:5173
 
 ---
 
+## Running locally with Docker
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+
+### Build and run the full stack
+
+```bash
+# Copy and fill in env vars (MONGO_URI can point to the compose mongo service)
+cp server/.env.example server/.env
+
+# Build image and start app + mongo
+docker compose up --build
+```
+
+The app will be available at `http://localhost:3000`. `/api/health` confirms the server is up.
+
+### Build and run the app image standalone
+
+```bash
+docker build -t studybuddy-v2 .
+docker run -p 3000:3000 --env-file server/.env studybuddy-v2
+```
+
+### Useful commands
+
+```bash
+docker compose down          # stop and remove containers
+docker compose down -v       # also remove the mongo data volume
+docker compose logs -f app   # stream app logs
+```
+
+---
+
 ## Deployment
 
 > _Deployment section — to be completed once Render + GitHub Actions CI/CD is configured._
