@@ -1,20 +1,7 @@
 // ── User ─────────────────────────────────────────────────────────────────────
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  xp: number;
-  level: number;
-  streak: number;
-  lastActiveDate: string | null;
-  achievements: string[];
-  studyGoalMinutes: number;
-  discipline: string;
-  studyLanguage: string;
-  createdAt: string;
-}
-
+export type { User } from './types/user';
+import type { User } from './types/user';
 export type UserProfile = Omit<User, 'createdAt'>;
 
 // ── Task ──────────────────────────────────────────────────────────────────────

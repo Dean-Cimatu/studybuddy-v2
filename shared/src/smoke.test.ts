@@ -3,7 +3,7 @@ import type { User, Task, AIMessage } from './index';
 
 describe('shared types smoke', () => {
   it('User shape is assignable', () => {
-    const user: Partial<User> = { email: 'test@example.com', name: 'test' };
+    const user: Partial<User> = { email: 'test@example.com', displayName: 'test' };
     expect(user.email).toBe('test@example.com');
   });
 

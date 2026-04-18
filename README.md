@@ -77,7 +77,7 @@ npm run dev -w client   # http://localhost:5173
 
 | Variable | Required | Description |
 |---|---|---|
-| `MONGO_URI` | Yes | MongoDB Atlas connection string |
+| `MONGODB_URI` | Yes | MongoDB connection string (Atlas or local Docker) |
 | `JWT_SECRET` | Yes | Long random string for JWT signing |
 | `ANTHROPIC_API_KEY` | Yes | Anthropic Claude API key |
 | `OPEN_AI_KEY` | For video | OpenAI key for audio transcription |
