@@ -1,7 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Client is created on first call so dotenv has already populated the env by then
+let _client: Anthropic | null = null;
+function getClient(): Anthropic {
+  if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _client;
+}
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -54,7 +59,7 @@ export async function generateTasksFromDescription(
   userInput: string,
   _userId: string
 ): Promise<GeneratedTask[]> {
-  const message = await client.messages.create({
+  const message = await getClient().messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
     system: TASK_GEN_SYSTEM,
@@ -82,7 +87,7 @@ export type UnifiedResponse =
 export async function unifiedChat(
   messages: { role: 'user' | 'assistant'; content: string }[]
 ): Promise<UnifiedResponse> {
-  const message = await client.messages.create({
+  const message = await getClient().messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
     system: UNIFIED_SYSTEM,
@@ -110,7 +115,7 @@ export async function unifiedChat(
 export async function chatWellbeing(
   messages: { role: 'user' | 'assistant'; content: string }[]
 ): Promise<{ reply: string; resourceCategory?: string }> {
-  const message = await client.messages.create({
+  const message = await getClient().messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 512,
     system: WELLBEING_SYSTEM,

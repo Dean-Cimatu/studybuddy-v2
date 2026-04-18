@@ -1,8 +1,54 @@
 # 📚 StudyBuddy v2
 
 [![CI](https://github.com/Dean-Cimatu/studybuddy-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/Dean-Cimatu/studybuddy-v2/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Node](https://img.shields.io/badge/Node-20_LTS-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Docker](https://img.shields.io/badge/Docker-multi--stage-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-StudyBuddy v2 is an AI-powered student productivity platform built as a TypeScript monorepo. It combines intelligent task management, a Claude-backed chat assistant, flashcard generation, video summarisation, and gamification into a single cohesive study companion — rebuilt from the ground up with a production-grade stack targeting Render + MongoDB Atlas with GitHub Actions CI/CD.
+**Live demo → [studybuddy.deancimatu.com](https://studybuddy.deancimatu.com)**
+
+AI-powered student productivity platform. Describe an assignment and it creates your task list. Mention you're stressed and it responds with warmth and Middlesex University support links. Built as a TypeScript monorepo and deployed to Render via Docker.
+
+---
+
+## Screenshots
+
+### Dashboard — task list with AI sidebar
+![Dashboard showing task list grouped by status with AI chat sidebar](docs/screenshots/dashboard.png)
+
+### AI chat — task generation mode
+![AI chat generating tasks from an assignment description](docs/screenshots/chat-tasks.png)
+
+### AI chat — wellbeing mode with resource card
+![AI chat responding to stress with a Middlesex University resource card](docs/screenshots/chat-wellbeing.png)
+
+> Screenshots taken from the live deployment at [studybuddy.deancimatu.com](https://studybuddy.deancimatu.com)
+
+---
+
+## Origin
+
+Originally built in 24 hours for a Middlesex University hackathon ([v1 repo](https://github.com/Dean-Cimatu/Hackathon)). The prototype worked but had real problems: JWT tokens in `localStorage`, no proper auth middleware, no tests, no CI, and a single JS file for the entire backend.
+
+StudyBuddy v2 is a ground-up rebuild in 2026 — same idea, production-grade implementation. Proper auth with httpOnly cookies, per-user query scoping with explicit IDOR tests, a typed monorepo, GitHub Actions CI, Docker deployment, and a full security write-up.
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 + Vite + TypeScript + Tailwind CSS |
+| Backend | Express + TypeScript + Mongoose |
+| Database | MongoDB Atlas (M0 free tier) |
+| AI | Anthropic Claude Haiku 4.5 (`@anthropic-ai/sdk`) |
+| Auth | JWT (httpOnly cookie) + bcrypt cost 12 |
+| Server state | TanStack Query (React Query) |
+| Testing | Vitest + Supertest + mongodb-memory-server |
+| CI/CD | GitHub Actions → Render (Docker) |
+| Containerisation | Docker multi-stage, `node:20-alpine`, non-root user |
 
 ---
 
@@ -24,149 +70,97 @@ graph TD
     Render --> Claude
 ```
 
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for request flow diagrams and AI layer isolation detail.
+See [`docs/SECURITY.md`](docs/SECURITY.md) for security decisions.
+
 ---
 
-## Monorepo Structure
+## Monorepo structure
 
 ```
 studybuddy-v2/
 ├── client/          Vite + React + TypeScript + Tailwind
 ├── server/          Express + TypeScript API
-├── shared/          Shared TypeScript types
-├── tsconfig.base.json
-├── eslint.config.mjs
-└── .prettierrc
+├── shared/          Shared TypeScript types (no runtime code)
+├── docs/            ARCHITECTURE.md, SECURITY.md
+├── .github/
+│   └── workflows/   ci.yml, keep-warm.yml
+├── Dockerfile       Multi-stage build
+├── render.yaml      Render Blueprint
+└── docker-compose.yml
 ```
 
 ---
 
-## Local Setup
+## Local setup
 
 ### Prerequisites
 - Node 20 LTS (`nvm use`)
-- MongoDB Atlas account (or local MongoDB)
-- Anthropic API key
-- OpenAI API key (for video transcription)
+- MongoDB running (Atlas or Docker)
+- Anthropic API key from [console.anthropic.com](https://console.anthropic.com)
 
-### Install
-
-```bash
-npm install          # installs all workspaces from root
-```
-
-### Environment
-
-Copy and fill in:
+### Install & run
 
 ```bash
-cp server/.env.example server/.env
+npm install                         # installs all workspaces
+cp server/.env.example server/.env  # fill in your values
+npm run dev                         # client :5173, server :3000
 ```
 
-### Run
-
-```bash
-# Both client and server (from root)
-npm run dev
-
-# Individually
-npm run dev -w server   # http://localhost:3000
-npm run dev -w client   # http://localhost:5173
-```
-
----
-
-## Environment Variables
+### Environment variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `MONGODB_URI` | Yes | MongoDB connection string (Atlas or local Docker) |
-| `JWT_SECRET` | Yes | Long random string for JWT signing |
-| `ANTHROPIC_API_KEY` | Yes | Anthropic Claude API key |
-| `OPEN_AI_KEY` | For video | OpenAI key for audio transcription |
-| `PORT` | No | Server port (default: 3000) |
+| `MONGODB_URI` | Yes | Atlas: `mongodb+srv://...` or Docker: `mongodb://mongo:27017/studybuddy-v2` |
+| `JWT_SECRET` | Yes | `openssl rand -hex 32` |
+| `ANTHROPIC_API_KEY` | Yes | From [console.anthropic.com](https://console.anthropic.com) |
+| `PORT` | No | Server port (default 3000) |
 
----
-
-## Running locally with Docker
-
-### Prerequisites
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
-
-### Build and run the full stack
+### Run with Docker
 
 ```bash
-# Copy and fill in env vars (MONGO_URI can point to the compose mongo service)
-cp server/.env.example server/.env
-
-# Build image and start app + mongo
-docker compose up --build
-```
-
-The app will be available at `http://localhost:3000`. `/api/health` confirms the server is up.
-
-### Build and run the app image standalone
-
-```bash
-docker build -t studybuddy-v2 .
-docker run -p 3000:3000 --env-file server/.env studybuddy-v2
-```
-
-### Useful commands
-
-```bash
-docker compose down          # stop and remove containers
-docker compose down -v       # also remove the mongo data volume
-docker compose logs -f app   # stream app logs
+docker compose up --build   # starts app + MongoDB on port 3000
 ```
 
 ---
 
 ## Deployment
 
-The app deploys to **Render** (Docker runtime) backed by **MongoDB Atlas**. A `render.yaml` Blueprint is included for one-click setup.
+The app deploys to **Render** via Docker. A `render.yaml` Blueprint is included.
 
-### Step-by-step
+### Steps
 
-**1. Fork / clone the repo**
-```bash
-git clone https://github.com/Dean-Cimatu/studybuddy-v2.git
-cd studybuddy-v2
-```
+**1. MongoDB Atlas M0 cluster**
+- [cloud.mongodb.com](https://cloud.mongodb.com) → New Project → M0 free
+- Create DB user, whitelist `0.0.0.0/0`, copy connection string
 
-**2. Create a MongoDB Atlas M0 cluster**
-- Go to [cloud.mongodb.com](https://cloud.mongodb.com) → New Project → Build a Cluster → M0 (free)
-- Create a database user and note the password
-- Allow connections from `0.0.0.0/0` (Network Access → Add IP)
-- Copy the connection string: `mongodb+srv://<user>:<password>@cluster.mongodb.net/studybuddy-v2`
+**2. Render — New → Blueprint**
+- Connect your fork; Render reads `render.yaml` automatically
+- Set these env vars in the Render dashboard (marked `sync: false`):
 
-**3. Create a Render account and connect GitHub**
-- Go to [render.com](https://render.com) → New → Blueprint
-- Point it at your fork; Render reads `render.yaml` automatically
-
-**4. Set environment variables in the Render dashboard**
-
-These are declared with `sync: false` in `render.yaml` — set them manually in Render → Environment:
-
-| Variable | Where to get it |
+| Variable | Source |
 |---|---|
-| `MONGODB_URI` | Atlas connection string from step 2 |
+| `MONGODB_URI` | Atlas connection string |
 | `JWT_SECRET` | `openssl rand -hex 32` |
-| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) → API Keys |
+| `ANTHROPIC_API_KEY` | Anthropic console |
 
-**5. Add `DEPLOYED_URL` repo secret (for keep-warm cron)**
-- GitHub → Settings → Secrets → Actions → New secret
-- Name: `DEPLOYED_URL`, Value: your Render service URL (e.g. `https://studybuddy-v2.onrender.com`)
+**3. Custom domain**
+- Render dashboard → your service → Settings → Custom Domains → add `studybuddy.deancimatu.com`
+- At your DNS provider add: `CNAME studybuddy → <your-service>.onrender.com`
+- Render provisions a TLS certificate automatically
 
-**6. Push to main — CI runs, then Render auto-deploys**
-```bash
-git push origin main
-```
+**4. Branch protection (recommended)**
+- GitHub → Settings → Branches → Add rule → `main`
+- Enable: "Require status checks to pass" → select `lint`, `typecheck`, `test`
+- Enable: "Require a pull request before merging"
+
+**5. Keep-warm repo secret**
+- GitHub → Settings → Secrets → Actions → `DEPLOYED_URL` = `https://studybuddy.deancimatu.com`
+- The keep-warm workflow pings `/api/health` every 10 minutes to prevent Render free-tier spin-down
 
 ### Free tier cold starts
 
-Render's free tier spins down services after ~15 minutes of inactivity, causing a ~30–60 second cold start on the next request. The keep-warm workflow (`.github/workflows/keep-warm.yml`) pings `/api/health` every 10 minutes to prevent this.
-
-> **Note:** GitHub Actions free tier provides 2,000 minutes/month. Pinging every 10 min = ~4,320 pings/month. Keep an eye on usage or switch to a paid Render plan to eliminate cold starts entirely.
+Render free tier spins down after 15 minutes of inactivity (~30–60s cold start). The keep-warm cron prevents this by pinging every 10 minutes. Upgrade to Render Starter ($7/mo) to eliminate cold starts entirely.
 
 ---
 
@@ -174,8 +168,39 @@ Render's free tier spins down services after ~15 minutes of inactivity, causing 
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Run client + server concurrently |
-| `npm run build` | Build all workspaces |
+| `npm run dev` | Client + server concurrently |
+| `npm run build` | Build all workspaces (shared → server → client) |
 | `npm run lint` | ESLint across all workspaces |
 | `npm run typecheck` | TypeScript checks across all workspaces |
-| `npm run test` | Run tests across all workspaces |
+| `npm run test` | Vitest across all workspaces (41 tests) |
+
+---
+
+## Roadmap
+
+### Completed
+- [x] Monorepo scaffold — TypeScript, Vite, Express, Tailwind
+- [x] Docker multi-stage build + docker-compose
+- [x] GitHub Actions CI — lint, typecheck, test, docker-build
+- [x] MongoDB + Mongoose User model
+- [x] Email/password auth — bcrypt + JWT httpOnly cookie
+- [x] Tasks CRUD API with per-user scoping + IDOR tests
+- [x] Dashboard UI with React Query + optimistic updates
+- [x] Claude AI — task generation + wellbeing chat
+- [x] Chatbot sidebar — collapsible, localStorage history, resource cards
+- [x] Render deployment + keep-warm cron
+- [x] Custom domain + TLS
+
+### Planned
+- [ ] Flashcard generation (AI-powered from notes)
+- [ ] Pomodoro / study session timer
+- [ ] Video/audio summarisation (OpenAI Whisper)
+- [ ] Spaced repetition review scheduler
+- [ ] Progress analytics dashboard
+- [ ] Gamification — streaks, points, achievements
+
+---
+
+## License
+
+[MIT](./LICENSE) © 2026 Dean Cimatu
