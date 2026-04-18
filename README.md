@@ -1,5 +1,7 @@
 # 📚 StudyBuddy v2
 
+[![CI](https://github.com/Dean-Cimatu/studybuddy-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/Dean-Cimatu/studybuddy-v2/actions/workflows/ci.yml)
+
 StudyBuddy v2 is an AI-powered student productivity platform built as a TypeScript monorepo. It combines intelligent task management, a Claude-backed chat assistant, flashcard generation, video summarisation, and gamification into a single cohesive study companion — rebuilt from the ground up with a production-grade stack targeting Render + MongoDB Atlas with GitHub Actions CI/CD.
 
 ---

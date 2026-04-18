@@ -8,9 +8,10 @@
     "build": "tsc",
     "lint": "echo \"lint: no JS files in shared\"",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet\""
+    "test": "vitest run"
   },
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^4.1.4"
   }
 }
