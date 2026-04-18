@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/requireAuth';
-import { generateTasksFromDescription, chatWellbeing } from '../ai/claude';
+import { generateTasksFromDescription, chatWellbeing, unifiedChat } from '../ai/claude';
 import { TaskModel } from '../models/Task';
 
 const descriptionSchema = z.object({
@@ -54,6 +54,28 @@ export function createAiRouter(maxRequestsPerHour?: number) {
     } catch (err) {
       console.error('Task generation error:', err);
       return res.status(500).json({ error: err instanceof Error ? err.message : 'AI generation failed' });
+    }
+  });
+
+  // POST /api/ai/message — unified endpoint, server detects task-gen vs wellbeing from response
+  router.post('/message', async (req: Request, res: Response) => {
+    const parsed = chatSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' });
+    }
+
+    try {
+      const result = await unifiedChat(parsed.data.messages);
+      if (result.mode === 'tasks') {
+        const docs = await TaskModel.insertMany(
+          result.tasks.map(t => ({ ...t, userId: req.user!._id.toString() }))
+        );
+        return res.status(201).json({ mode: 'tasks', tasks: docs.map(d => d.toJSON()) });
+      }
+      return res.json(result);
+    } catch (err) {
+      console.error('Unified chat error:', err);
+      return res.status(500).json({ error: err instanceof Error ? err.message : 'AI request failed' });
     }
   });
 
