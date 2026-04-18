@@ -6,30 +6,7 @@ export type UserProfile = Omit<User, 'createdAt'>;
 
 // ── Task ──────────────────────────────────────────────────────────────────────
 
-export type Priority = 'high' | 'medium' | 'low';
-
-export interface Task {
-  id: string;
-  userId: string;
-  title: string;
-  description: string;
-  completed: boolean;
-  priority: Priority;
-  dueDate: string | null;
-  tags: string[];
-  aiGenerated: boolean;
-  createdAt: string;
-  completedAt: string | null;
-}
-
-export interface CreateTaskInput {
-  title: string;
-  description?: string;
-  priority?: Priority;
-  dueDate?: string | null;
-  tags?: string[];
-  aiGenerated?: boolean;
-}
+export type { Task, Priority, TaskStatus } from './types/task';
 
 // ── Flashcard ─────────────────────────────────────────────────────────────────
 
