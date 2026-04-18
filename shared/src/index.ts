@@ -85,8 +85,7 @@ export interface ChatResponse {
 // ── API responses ─────────────────────────────────────────────────────────────
 
 export interface AuthResponse {
-  token: string;
-  user: UserProfile;
+  user: User;
 }
 
 export interface ApiError {
