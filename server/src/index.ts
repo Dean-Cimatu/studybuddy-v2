@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { connect } from './db/connection';
 import authRouter from './routes/auth';
 import tasksRouter from './routes/tasks';
@@ -29,8 +30,10 @@ connect()
     const PORT = process.env.PORT || 3000;
     const isProd = process.env.NODE_ENV === 'production';
 
-    if (isProd) {
-      const clientDist = path.join(__dirname, '../../client/dist');
+    // Serve the compiled React app — in Docker the dist always exists;
+    // skip only in local dev where Vite's own server handles the client
+    const clientDist = path.join(__dirname, '../../client/dist');
+    if (isProd || fs.existsSync(clientDist)) {
       app.use(express.static(clientDist));
       app.get('*', (_req, res) => {
         res.sendFile(path.join(clientDist, 'index.html'));
