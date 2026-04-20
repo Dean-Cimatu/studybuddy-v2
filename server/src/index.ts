@@ -8,6 +8,7 @@ import { connect } from './db/connection';
 import authRouter from './routes/auth';
 import tasksRouter from './routes/tasks';
 import aiRouter from './routes/ai';
+import statsRouter from './routes/stats';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/stats', statsRouter);
 
 connect()
   .then(() => {
