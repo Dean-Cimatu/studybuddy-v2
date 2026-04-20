@@ -11,6 +11,9 @@ export interface LogSessionInput {
   notes?: string;
 }
 
+const DASHBOARD_KEY = ['dashboard-stats'] as const;
+const HISTORY_KEY = (days: number) => ['study-history', days] as const;
+
 async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { credentials: 'include', ...init });
   if (!res.ok) {
@@ -22,14 +25,15 @@ async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
 
 export function useDashboardStats() {
   return useQuery({
-    queryKey: ['stats', 'dashboard'],
+    queryKey: DASHBOARD_KEY,
     queryFn: () => apiFetch<DashboardStats>('/api/stats/dashboard'),
+    refetchInterval: 60000,
   });
 }
 
 export function useStudyHistory(days = 30) {
   return useQuery({
-    queryKey: ['stats', 'history', days],
+    queryKey: HISTORY_KEY(days),
     queryFn: () =>
       apiFetch<{ history: StudyHistoryDay[] }>(`/api/stats/history?days=${days}`).then(d => d.history),
   });
@@ -45,7 +49,8 @@ export function useLogSession() {
         body: JSON.stringify(input),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
+      queryClient.invalidateQueries({ queryKey: ['study-history'] });
     },
   });
 }
