@@ -9,6 +9,7 @@ import authRouter from './routes/auth';
 import tasksRouter from './routes/tasks';
 import aiRouter from './routes/ai';
 import statsRouter from './routes/stats';
+import modulesRouter from './routes/modules';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/stats', statsRouter);
+app.use('/api/modules', modulesRouter);
 
 connect()
   .then(() => {
