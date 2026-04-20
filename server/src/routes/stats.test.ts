@@ -6,7 +6,6 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import authRouter from './auth';
 import statsRouter from './stats';
-import { UserModel } from '../models/User';
 
 let mongoServer: MongoMemoryServer;
 const app = express();
@@ -106,5 +105,72 @@ describe('POST /api/stats/session', () => {
 
     const meRes = await request(app).get('/api/auth/me').set('Cookie', cookie);
     expect(meRes.body.user.totalStudyMinutes).toBe(25);
+  });
+});
+
+describe('GET /api/stats/dashboard', () => {
+  it('returns all expected fields', async () => {
+    const cookie = await registerAndGetCookie('dash@test.com');
+    const res = await request(app).get('/api/stats/dashboard').set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+    const s = res.body;
+    expect(s).toHaveProperty('studyMinutesToday');
+    expect(s).toHaveProperty('studyMinutesThisWeek');
+    expect(s).toHaveProperty('totalStudyMinutes');
+    expect(s).toHaveProperty('tasksCompletedToday');
+    expect(s).toHaveProperty('tasksCompletedThisWeek');
+    expect(s).toHaveProperty('currentStreak');
+    expect(s).toHaveProperty('longestStreak');
+    expect(s).toHaveProperty('weeklyGoalHours');
+    expect(s).toHaveProperty('weeklyGoalProgress');
+    expect(s).toHaveProperty('studyScoreThisWeek');
+  });
+
+  it('returns 0s for a new user with no sessions', async () => {
+    const cookie = await registerAndGetCookie('zero@test.com');
+    const res = await request(app).get('/api/stats/dashboard').set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.studyMinutesToday).toBe(0);
+    expect(res.body.studyMinutesThisWeek).toBe(0);
+    expect(res.body.tasksCompletedToday).toBe(0);
+    expect(res.body.currentStreak).toBe(0);
+  });
+
+  it('returns 401 without auth', async () => {
+    const res = await request(app).get('/api/stats/dashboard');
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('GET /api/stats/history', () => {
+  it('returns array with correct number of days (default 30)', async () => {
+    const cookie = await registerAndGetCookie('hist@test.com');
+    const res = await request(app).get('/api/stats/history').set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.history).toHaveLength(30);
+  });
+
+  it('includes days with 0 minutes (gap filling)', async () => {
+    const cookie = await registerAndGetCookie('gaps@test.com');
+    const res = await request(app).get('/api/stats/history?days=7').set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.history.every((d: { minutes: number }) => d.minutes === 0)).toBe(true);
+  });
+
+  it('respects ?days param', async () => {
+    const cookie = await registerAndGetCookie('dpar@test.com');
+    const res = await request(app).get('/api/stats/history?days=14').set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.history).toHaveLength(14);
+  });
+
+  it('returns 401 without auth', async () => {
+    const res = await request(app).get('/api/stats/history');
+    expect(res.status).toBe(401);
   });
 });
