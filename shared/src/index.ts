@@ -25,20 +25,9 @@ export interface Flashcard {
   createdAt: string;
 }
 
-// ── Study Session ─────────────────────────────────────────────────────────────
+// ── Study Session & Stats ─────────────────────────────────────────────────────
 
-export type SessionType = 'pomodoro' | 'free';
-
-export interface StudySession {
-  id: string;
-  userId: string;
-  startTime: string;
-  endTime: string | null;
-  durationMinutes: number;
-  type: SessionType;
-  tasksCompleted: number;
-  notes: string;
-}
+export type { StudySession, DashboardStats, StudyHistoryDay } from './types/stats';
 
 // ── AI / Chat ─────────────────────────────────────────────────────────────────
 
