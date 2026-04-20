@@ -25,6 +25,10 @@ export interface Flashcard {
   createdAt: string;
 }
 
+// ── Module ────────────────────────────────────────────────────────────────────
+
+export type { Module, ModuleDeadline } from './types/module';
+
 // ── Study Session & Stats ─────────────────────────────────────────────────────
 
 export type { StudySession, DashboardStats, StudyHistoryDay } from './types/stats';
