@@ -147,3 +147,85 @@ describe('Cross-user isolation', () => {
     expect(del.status).toBe(404);
   });
 });
+
+const validDeadline = {
+  title: 'Final Exam',
+  date: '2026-06-01T09:00:00.000Z',
+  type: 'exam',
+  weight: 40,
+};
+
+async function createModuleAndGetId(cookie: string) {
+  const res = await request(app).post('/api/modules').set('Cookie', cookie).send(validModule);
+  return res.body.module._id as string;
+}
+
+describe('POST /api/modules/:id/deadline', () => {
+  it('adds deadline to module', async () => {
+    const cookie = await registerAndGetCookie('dl1@test.com');
+    const moduleId = await createModuleAndGetId(cookie);
+
+    const res = await request(app)
+      .post(`/api/modules/${moduleId}/deadline`)
+      .set('Cookie', cookie)
+      .send(validDeadline);
+
+    expect(res.status).toBe(201);
+    expect(res.body.module.deadlines).toHaveLength(1);
+    expect(res.body.module.deadlines[0].title).toBe('Final Exam');
+  });
+
+  it('cannot add deadline to another user\'s module', async () => {
+    const cookieA = await registerAndGetCookie('dl-a@test.com');
+    const cookieB = await registerAndGetCookie('dl-b@test.com');
+    const moduleId = await createModuleAndGetId(cookieA);
+
+    const res = await request(app)
+      .post(`/api/modules/${moduleId}/deadline`)
+      .set('Cookie', cookieB)
+      .send(validDeadline);
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('PUT /api/modules/:id/deadline/:deadlineId', () => {
+  it('marks deadline as completed', async () => {
+    const cookie = await registerAndGetCookie('dl2@test.com');
+    const moduleId = await createModuleAndGetId(cookie);
+
+    const addRes = await request(app)
+      .post(`/api/modules/${moduleId}/deadline`)
+      .set('Cookie', cookie)
+      .send(validDeadline);
+    const deadlineId = addRes.body.module.deadlines[0]._id as string;
+
+    const res = await request(app)
+      .put(`/api/modules/${moduleId}/deadline/${deadlineId}`)
+      .set('Cookie', cookie)
+      .send({ completed: true });
+
+    expect(res.status).toBe(200);
+    expect(res.body.module.deadlines[0].completed).toBe(true);
+  });
+});
+
+describe('DELETE /api/modules/:id/deadline/:deadlineId', () => {
+  it('removes the deadline', async () => {
+    const cookie = await registerAndGetCookie('dl3@test.com');
+    const moduleId = await createModuleAndGetId(cookie);
+
+    const addRes = await request(app)
+      .post(`/api/modules/${moduleId}/deadline`)
+      .set('Cookie', cookie)
+      .send(validDeadline);
+    const deadlineId = addRes.body.module.deadlines[0]._id as string;
+
+    const res = await request(app)
+      .delete(`/api/modules/${moduleId}/deadline/${deadlineId}`)
+      .set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.module.deadlines).toHaveLength(0);
+  });
+});
