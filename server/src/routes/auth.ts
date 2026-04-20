@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { UserModel } from '../models/User';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
@@ -113,6 +114,40 @@ router.get('/me', async (req: Request, res: Response) => {
     return res.json({ user: user.toJSON() });
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+});
+
+const profileSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  studyGoalHours: z.number().min(1).max(80).optional(),
+  discipline: z.string().max(100).optional(),
+  studyLanguage: z.string().max(10).optional(),
+  preferredSessionLength: z.union([z.literal(25), z.literal(50), z.literal(90)]).optional(),
+  preferredStudyTime: z.enum(['morning', 'afternoon', 'evening', 'no-preference']).optional(),
+  themeAccent: z.enum(['blue', 'green', 'purple', 'amber']).optional(),
+});
+
+// PUT /api/auth/profile
+router.put('/profile', requireAuth, async (req: Request, res: Response) => {
+  const parsed = profileSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' });
+  }
+
+  const { name, ...profileFields } = parsed.data;
+  const updates: Record<string, unknown> = { ...profileFields };
+  if (name) updates['displayName'] = name;
+
+  try {
+    const user = await UserModel.findByIdAndUpdate(
+      req.user!._id,
+      { $set: updates },
+      { returnDocument: 'after', runValidators: true }
+    );
+    return res.json({ user: user!.toJSON() });
+  } catch (err) {
+    console.error('Profile update error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

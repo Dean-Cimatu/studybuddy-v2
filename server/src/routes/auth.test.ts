@@ -119,6 +119,44 @@ describe('POST /api/auth/logout', () => {
   });
 });
 
+describe('PUT /api/auth/profile', () => {
+  let cookie: string;
+
+  beforeEach(async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'dave@example.com', password: 'password123', displayName: 'Dave' });
+    cookie = ((res.headers['set-cookie'] as unknown) as string[])[0];
+  });
+
+  it('updates studyGoalHours and returns updated user', async () => {
+    const res = await request(app)
+      .put('/api/auth/profile')
+      .set('Cookie', cookie)
+      .send({ studyGoalHours: 20 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.studyGoalHours).toBe(20);
+  });
+
+  it('rejects studyGoalHours > 80', async () => {
+    const res = await request(app)
+      .put('/api/auth/profile')
+      .set('Cookie', cookie)
+      .send({ studyGoalHours: 81 });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 401 without auth', async () => {
+    const res = await request(app)
+      .put('/api/auth/profile')
+      .send({ studyGoalHours: 20 });
+
+    expect(res.status).toBe(401);
+  });
+});
+
 describe('GET /api/auth/me', () => {
   it('returns user when authenticated with valid cookie', async () => {
     const registerRes = await request(app)
