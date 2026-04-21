@@ -231,50 +231,80 @@ export function PomodoroTimer() {
 
   return (
     <>
-      <div className="relative flex items-center gap-2 select-none" ref={pickerRef}>
-        {/* Session dots */}
-        <div className="flex gap-0.5">
-          {Array.from({ length: SESSION_DOTS }).map((_, i) => (
-            <span
-              key={i}
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                i < (timer.sessionCount % SESSION_DOTS) || (timer.sessionCount >= SESSION_DOTS && i < SESSION_DOTS)
-                  ? 'bg-blue-500' : 'bg-slate-200'
-              }`}
-            />
-          ))}
+      <div className="relative flex items-center gap-1.5 select-none" ref={pickerRef}>
+        {/* Compact pill showing state + time */}
+        <div
+          className={`flex items-center gap-2 rounded-full px-3 py-1 transition-colors ${
+            timer.isRunning
+              ? timer.isBreak ? 'bg-emerald-50 border border-emerald-200' : 'bg-blue-50 border border-blue-200'
+              : 'bg-slate-100 border border-slate-200'
+          }`}
+        >
+          {/* Session progress dots */}
+          <div className="flex gap-0.5">
+            {Array.from({ length: SESSION_DOTS }).map((_, i) => (
+              <span
+                key={i}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  i < (timer.sessionCount % SESSION_DOTS) || (timer.sessionCount >= SESSION_DOTS && i < SESSION_DOTS)
+                    ? 'bg-blue-500' : 'bg-slate-300'
+                }`}
+              />
+            ))}
+          </div>
+
+          {timer.isRunning && (
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide leading-none">
+              {timer.isBreak ? 'Break' : 'Study'}
+            </span>
+          )}
+
+          <span className={`font-bold text-sm tabular-nums leading-none ${
+            timer.isRunning ? (timer.isBreak ? 'text-emerald-600' : 'text-blue-600') : 'text-slate-600'
+          }`}>
+            {displayTime}
+          </span>
+
+          {timer.moduleTag && !timer.isBreak && (
+            <span className="text-[10px] text-slate-500 max-w-[60px] truncate leading-none">
+              {timer.moduleTag}
+            </span>
+          )}
         </div>
 
-        <span className={`font-semibold text-sm tabular-nums ${timer.isRunning ? timeColour : 'text-slate-700'}`}>
-          {timer.isBreak && timer.isRunning ? `Break ${displayTime}` : displayTime}
-        </span>
+        {logged && <span className="text-xs text-emerald-500 animate-pulse font-medium">✓ logged</span>}
 
-        {timer.moduleTag && (
-          <span className="text-xs bg-slate-100 text-slate-600 rounded-full px-2 py-0.5 max-w-[80px] truncate">
-            {timer.moduleTag}
-          </span>
-        )}
-
-        {logged && <span className="text-xs text-emerald-500 animate-pulse">+logged</span>}
-
-        <div className="flex items-center gap-1">
+        {/* Controls */}
+        <div className="flex items-center gap-0.5">
           {!timer.isRunning ? (
-            <button className="btn-ghost p-1 text-slate-600 hover:text-blue-500" onClick={handlePlay} title="Start">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <button
+              className="p-1.5 text-slate-500 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
+              onClick={handlePlay}
+              title="Start / choose module"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
               </svg>
             </button>
           ) : (
-            <button className="btn-ghost p-1 text-slate-600 hover:text-amber-500" onClick={timer.pause} title="Pause">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <button
+              className="p-1.5 text-slate-500 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+              onClick={timer.pause}
+              title="Pause"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
             </button>
           )}
 
           {(timer.isRunning || timer.timeRemaining < workSecs) && (
-            <button className="btn-ghost p-1 text-slate-400 hover:text-slate-600" onClick={timer.reset} title="Reset">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button
+              className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+              onClick={timer.reset}
+              title="Reset"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>

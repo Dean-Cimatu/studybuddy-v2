@@ -5,7 +5,6 @@ import { useModules } from '../hooks/useModules';
 import { useDashboardStats } from '../hooks/useStats';
 import { TabNav } from '../components/TabNav';
 import { StreakBadge } from '../components/StreakBadge';
-import { WeeklyProgress } from '../components/WeeklyProgress';
 import { PomodoroTimer } from '../components/PomodoroTimer';
 import { StatsPanel } from '../components/StatsPanel';
 import { Heatmap } from '../components/Heatmap';
@@ -129,16 +128,6 @@ export function DashboardPage() {
           </span>
           {stats && <StreakBadge streak={stats.currentStreak} />}
         </div>
-
-        {stats && (
-          <div className="hidden md:block w-48 flex-shrink-0 mx-auto">
-            <WeeklyProgress
-              minutesThisWeek={stats.studyMinutesThisWeek}
-              goalHours={stats.weeklyGoalHours}
-              compact
-            />
-          </div>
-        )}
 
         <div className="ml-auto flex items-center gap-2">
           <div className="hidden md:flex items-center">

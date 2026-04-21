@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTasks, useUpdateTask } from '../hooks/useTasks';
+import { useTasks, useUpdateTask, useCreateTask } from '../hooks/useTasks';
 import { useModules } from '../hooks/useModules';
 import { useGoogleEvents } from '../hooks/useGoogleCalendar';
 import type { Task } from '@studybuddy/shared';
@@ -153,22 +153,29 @@ interface DayPanelProps {
 
 function DayPanel({ date, tasks, deadlines, googleEvents }: DayPanelProps) {
   const updateTask = useUpdateTask();
+  const createTask = useCreateTask();
+  const [newTitle, setNewTitle] = useState('');
   const formatted = new Date(`${date}T12:00:00`).toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long',
   });
+
+  function handleAddTask(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+    createTask.mutate(
+      { title: newTitle.trim(), dueDate: new Date(`${date}T12:00:00`).toISOString() },
+      { onSuccess: () => setNewTitle('') }
+    );
+  }
 
   return (
     <div className="mt-4 rounded-xl border border-slate-200 p-4">
       <p className="text-sm font-semibold text-slate-700 mb-3">{formatted}</p>
 
-      {tasks.length === 0 && deadlines.length === 0 && googleEvents.length === 0 && (
-        <p className="text-xs text-slate-400">Nothing scheduled.</p>
-      )}
-
       {deadlines.map((d, i) => (
         <div key={i} className="flex items-center gap-2 mb-2">
           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: d.colour }} />
-          <span className="text-xs text-slate-600">{d.label}</span>
+          <span className="text-xs text-slate-600 font-medium">{d.label}</span>
         </div>
       ))}
 
@@ -177,9 +184,9 @@ function DayPanel({ date, tasks, deadlines, googleEvents }: DayPanelProps) {
           {googleEvents.map(ev => (
             <li key={ev.id} className="flex items-center gap-2">
               <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth={1.5} />
-                  <path strokeLinecap="round" strokeWidth={1.5} d="M16 2v4M8 2v4M3 10h18" />
-                </svg>
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth={1.5} />
+                <path strokeLinecap="round" strokeWidth={1.5} d="M16 2v4M8 2v4M3 10h18" />
+              </svg>
               <span className="text-sm text-slate-600">
                 {!ev.allDay && (
                   <span className="text-slate-400 mr-1">
@@ -193,26 +200,49 @@ function DayPanel({ date, tasks, deadlines, googleEvents }: DayPanelProps) {
         </ul>
       )}
 
-      <ul className="space-y-2">
-        {tasks.map(task => (
-          <li key={task.id} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={task.status === 'done'}
-              onChange={e =>
-                void updateTask.mutateAsync({
-                  id: task.id,
-                  input: { status: e.target.checked ? 'done' : 'todo' },
-                })
-              }
-              className="rounded accent-blue-500 cursor-pointer"
-            />
-            <span className={`text-sm ${task.status === 'done' ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-              {task.title}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {tasks.length > 0 && (
+        <ul className="space-y-2 mb-3">
+          {tasks.map(task => (
+            <li key={task.id} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={task.status === 'done'}
+                onChange={e =>
+                  void updateTask.mutateAsync({
+                    id: task.id,
+                    input: { status: e.target.checked ? 'done' : 'todo' },
+                  })
+                }
+                className="rounded accent-blue-500 cursor-pointer"
+              />
+              <span className={`text-sm flex-1 ${task.status === 'done' ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                {task.title}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {tasks.length === 0 && deadlines.length === 0 && googleEvents.length === 0 && (
+        <p className="text-xs text-slate-400 mb-3">Nothing scheduled for this day.</p>
+      )}
+
+      {/* Quick add task */}
+      <form onSubmit={handleAddTask} className="flex gap-2 mt-1">
+        <input
+          className="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-400 placeholder-slate-300"
+          placeholder="Add a task for this day…"
+          value={newTitle}
+          onChange={e => setNewTitle(e.target.value)}
+        />
+        <button
+          type="submit"
+          disabled={!newTitle.trim() || createTask.isPending}
+          className="btn-primary text-sm px-3 py-1.5 disabled:opacity-50"
+        >
+          Add
+        </button>
+      </form>
     </div>
   );
 }
