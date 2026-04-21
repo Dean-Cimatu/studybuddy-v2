@@ -266,7 +266,7 @@ export function SettingsPage() {
                       setGoalHours(val);
                       scheduleSave({ studyGoalHours: val });
                     }}
-                    className={`${fieldCls} w-24`}
+                    className="w-24 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:border-blue-400 transition-colors"
                   />
                   <span className="text-sm text-slate-500 dark:text-slate-400">hours / week</span>
                 </div>
@@ -324,7 +324,10 @@ export function SettingsPage() {
               className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${darkMode ? 'bg-blue-500' : 'bg-slate-300'}`}
               aria-label="Toggle dark mode"
             >
-              <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${darkMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              <span
+                className={`absolute top-0.5 w-5 h-5 rounded-full shadow transition-transform duration-200 ${darkMode ? 'translate-x-6' : 'translate-x-0.5'}`}
+                style={{ backgroundColor: '#ffffff' }}
+              />
             </button>
           </div>
 
