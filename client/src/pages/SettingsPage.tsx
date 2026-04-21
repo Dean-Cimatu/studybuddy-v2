@@ -385,12 +385,19 @@ export function SettingsPage() {
             </div>
 
             <div className="pt-2">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-3">Achievements</p>
-              <div className="grid grid-cols-3 gap-2">
-                {ACHIEVEMENTS.map(ach => (
-                  <AchievementBadge key={ach.id} achievement={ach} earned={earnedSet.has(ach.id)} />
-                ))}
-              </div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-3">
+                Achievements
+                <span className="ml-2 text-xs font-normal text-slate-400">{earnedSet.size} / {ACHIEVEMENTS.length}</span>
+              </p>
+              {earnedSet.size === 0 ? (
+                <p className="text-sm text-slate-400">No achievements yet — keep studying!</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {ACHIEVEMENTS.filter(ach => earnedSet.has(ach.id)).map(ach => (
+                    <AchievementBadge key={ach.id} achievement={ach} earned />
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-700">

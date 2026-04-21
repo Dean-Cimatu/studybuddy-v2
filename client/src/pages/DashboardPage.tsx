@@ -177,31 +177,31 @@ export function DashboardPage() {
             {activeTab === 'calendar' && <Calendar />}
 
             {activeTab === 'social' && (
-              <div className="flex gap-4 min-h-[480px]">
+              <div className="flex gap-4 min-h-[520px]">
                 {/* Sidebar */}
-                <div className="w-52 shrink-0 card-base py-3">
+                <div className="w-48 shrink-0 card-base py-3">
                   <GroupList selectedGroupId={selectedGroupId} onSelectGroup={setSelectedGroupId} />
                 </div>
 
                 {/* Main panel */}
-                <div className="flex-1 min-w-0 flex flex-col gap-3">
-                  {selectedGroupId ? (
-                    <>
-                      <div className="card-base p-4">
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Members</p>
-                        <GroupMemberStatus groupId={selectedGroupId} />
-                      </div>
-                      <div className="card-base p-4 flex-1">
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Activity</p>
-                        <ActivityFeed groupId={selectedGroupId} />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="card-base flex-1 flex items-center justify-center text-slate-500 text-sm">
-                      Select a group to see activity
+                {selectedGroupId ? (
+                  <div className="flex-1 min-w-0 flex gap-4">
+                    {/* Leaderboard */}
+                    <div className="w-72 shrink-0 card-base p-4">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">This week</p>
+                      <GroupMemberStatus groupId={selectedGroupId} />
                     </div>
-                  )}
-                </div>
+                    {/* Activity feed */}
+                    <div className="flex-1 min-w-0 card-base p-4">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Activity</p>
+                      <ActivityFeed groupId={selectedGroupId} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 card-base flex items-center justify-center text-slate-500 text-sm">
+                    Select a group to see activity
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -90,27 +90,29 @@ export function ActivityFeed({ groupId }: ActivityFeedProps) {
   }
 
   return (
-    <div className="space-y-3 overflow-y-auto max-h-96">
+    <div className="space-y-4 overflow-y-auto max-h-[480px] pr-1">
       {items.map(item => (
         <div key={item._id} className="flex gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">
             {initials(item.userName)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-slate-200">
-              <span className="font-medium">{item.userName}</span>{' '}
+            <p className="text-sm text-slate-200 leading-snug">
+              <span className="font-semibold">{item.userName}</span>{' '}
               <span className="text-slate-400">{feedText(item)}</span>
             </p>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-slate-500 text-xs">{timeAgo(item.createdAt)}</span>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className="text-slate-600 text-xs">{timeAgo(item.createdAt)}</span>
+              {item.reactions.length > 0 && (
+                <span className="text-xs text-slate-500 bg-slate-800 rounded-full px-2 py-0.5">
+                  {item.reactions.length} 👍
+                </span>
+              )}
               <button
                 onClick={() => react.mutate({ groupId, itemId: item._id })}
-                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                className="text-xs text-slate-600 hover:text-blue-400 hover:bg-slate-800 rounded-full px-2 py-0.5 transition-colors"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                </svg>
-                <span>{item.reactions.length}</span>
+                + React
               </button>
             </div>
           </div>
