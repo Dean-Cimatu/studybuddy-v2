@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { TaskModel } from '../models/Task';
+import { ModuleModel } from '../models/Module';
 import { requireAuth } from '../middleware/requireAuth';
+import { breakdownGoal } from '../ai/claude';
 
 const router = Router();
 router.use(requireAuth);
@@ -115,6 +117,80 @@ router.delete('/:id', async (req: Request, res: Response) => {
   } catch {
     return res.status(404).json({ error: 'Task not found' });
   }
+});
+
+// ── POST /api/tasks/breakdown ─────────────────────────────────────────────────
+
+const breakdownSchema = z.object({
+  title: z.string().min(1).max(200),
+  moduleId: z.string().optional(),
+  deadline: z.string().datetime().optional(),
+});
+
+router.post('/breakdown', async (req: Request, res: Response) => {
+  const parsed = breakdownSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' });
+  }
+
+  const { title, moduleId, deadline } = parsed.data;
+  const userId = req.user!._id.toString();
+
+  let topics: string[] | undefined;
+  let language: string | undefined;
+  let moduleTag: string | undefined;
+
+  if (moduleId) {
+    const mod = await ModuleModel.findOne({ _id: moduleId, userId }).catch(() => null);
+    if (mod) {
+      topics = mod.topics.length ? mod.topics : undefined;
+      language = mod.language;
+      moduleTag = mod.name;
+    }
+  }
+
+  let items;
+  try {
+    items = await breakdownGoal({ title, topics, deadline, language });
+  } catch {
+    return res.status(422).json({ error: 'AI could not generate a valid breakdown. Please try again.' });
+  }
+
+  const now = new Date();
+
+  const goal = await TaskModel.create({
+    userId,
+    title,
+    isGoal: true,
+    moduleId: moduleId ?? null,
+    moduleTag: moduleTag ?? null,
+    dueDate: deadline ? deadline.slice(0, 10) : undefined,
+    order: 0,
+  });
+
+  const subtasks = await TaskModel.insertMany(
+    items.map((item, i) => {
+      const due = new Date(now);
+      due.setDate(due.getDate() + (item.weekNumber - 1) * 7);
+      return {
+        userId,
+        title: item.title,
+        estimatedMinutes: item.estimatedMinutes,
+        parentId: goal._id,
+        moduleId: moduleId ?? null,
+        moduleTag: moduleTag ?? null,
+        order: i,
+        dueDate: due.toISOString().slice(0, 10),
+        isGoal: false,
+      };
+    })
+  );
+
+  return res.status(201).json({
+    goal: goal.toJSON(),
+    subtasks: subtasks.map(t => t.toJSON()),
+    count: subtasks.length,
+  });
 });
 
 export default router;

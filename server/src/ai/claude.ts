@@ -60,7 +60,7 @@ export async function generateTasksFromDescription(
   _userId: string
 ): Promise<GeneratedTask[]> {
   const message = await getClient().messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6',
     max_tokens: 1024,
     system: TASK_GEN_SYSTEM,
     messages: [{ role: 'user', content: userInput }],
@@ -110,6 +110,52 @@ export async function unifiedChat(
   const resourceCategory = resourceMatch?.[1];
   const reply = raw.replace(/\s*\[RESOURCE:\w+\]\s*$/, '').trim();
   return { mode: 'wellbeing', reply, resourceCategory };
+}
+
+// ── Task breakdown ────────────────────────────────────────────────────────────
+
+const breakdownItemSchema = z.object({
+  title: z.string().min(1),
+  estimatedMinutes: z.number().int().positive(),
+  weekNumber: z.number().int().positive(),
+});
+
+export type BreakdownItem = z.infer<typeof breakdownItemSchema>;
+
+const BREAKDOWN_SYSTEM = `You are a study task planner. Break down this study goal into specific, actionable subtasks. Each subtask should be completable in 1-2 hours. If topics are provided, only use those topics — do not invent topics the student hasn't listed. If a deadline is provided, distribute tasks across the available weeks. If a module language is specified, generate task titles in that language.
+Return ONLY a valid JSON array of objects: { title: string, estimatedMinutes: number, weekNumber: number } where weekNumber starts at 1 for the current week.`;
+
+async function callBreakdown(userMessage: string): Promise<BreakdownItem[]> {
+  const message = await getClient().messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 2048,
+    system: BREAKDOWN_SYSTEM,
+    messages: [{ role: 'user', content: userMessage }],
+  });
+
+  const text = message.content
+    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+    .map(b => b.text)
+    .join('');
+
+  const raw: unknown = JSON.parse(text.trim());
+  if (!Array.isArray(raw)) throw new Error('Expected a JSON array');
+  return raw.map(item => breakdownItemSchema.parse(item));
+}
+
+export async function breakdownGoal(opts: {
+  title: string;
+  topics?: string[];
+  deadline?: string;
+  language?: string;
+}): Promise<BreakdownItem[]> {
+  const userMessage = `Goal: ${opts.title.slice(0, 500)}. Topics: ${opts.topics?.length ? opts.topics.join(', ') : 'not specified'}. Deadline: ${opts.deadline ?? 'not specified'}. Language: ${opts.language ?? 'en'}.`;
+
+  try {
+    return await callBreakdown(userMessage);
+  } catch {
+    return await callBreakdown(userMessage);
+  }
 }
 
 export async function chatWellbeing(

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
@@ -6,6 +6,16 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import authRouter from './auth';
 import tasksRouter from './tasks';
+
+vi.mock('../ai/claude', () => ({
+  breakdownGoal: vi.fn().mockResolvedValue([
+    { title: 'Subtask A', estimatedMinutes: 60, weekNumber: 1 },
+    { title: 'Subtask B', estimatedMinutes: 90, weekNumber: 2 },
+  ]),
+  generateTasksFromDescription: vi.fn(),
+  unifiedChat: vi.fn(),
+  chatWellbeing: vi.fn(),
+}));
 
 let mongoServer: MongoMemoryServer;
 const app = express();
@@ -173,6 +183,62 @@ describe('DELETE /api/tasks/:id', () => {
 
     expect((await request(app).delete(`/api/tasks/${id}`).set('Cookie', cookie)).status).toBe(204);
     expect((await request(app).get(`/api/tasks/${id}`).set('Cookie', cookie)).status).toBe(404);
+  });
+});
+
+// ── POST /api/tasks/breakdown ─────────────────────────────────────────────────
+
+describe('POST /api/tasks/breakdown', () => {
+  it('returns 401 without auth', async () => {
+    const res = await request(app).post('/api/tasks/breakdown').send({ title: 'Study for exam' });
+    expect(res.status).toBe(401);
+  });
+
+  it('creates a goal task and subtasks', async () => {
+    const cookie = await registerAndGetCookie('alice@test.com');
+    const res = await request(app)
+      .post('/api/tasks/breakdown')
+      .set('Cookie', cookie)
+      .send({ title: 'Study for exam' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.count).toBe(2);
+    expect(res.body.goal.isGoal).toBe(true);
+    expect(res.body.goal.title).toBe('Study for exam');
+    expect(res.body.subtasks).toHaveLength(2);
+  });
+
+  it('subtasks have parentId pointing to the goal', async () => {
+    const cookie = await registerAndGetCookie('alice@test.com');
+    const res = await request(app)
+      .post('/api/tasks/breakdown')
+      .set('Cookie', cookie)
+      .send({ title: 'Study for exam' });
+
+    const goalId = res.body.goal.id;
+    for (const sub of res.body.subtasks) {
+      expect(sub.parentId).toBe(goalId);
+    }
+  });
+
+  it('subtasks have estimatedMinutes from the breakdown', async () => {
+    const cookie = await registerAndGetCookie('alice@test.com');
+    const res = await request(app)
+      .post('/api/tasks/breakdown')
+      .set('Cookie', cookie)
+      .send({ title: 'Study for exam' });
+
+    expect(res.body.subtasks[0].estimatedMinutes).toBe(60);
+    expect(res.body.subtasks[1].estimatedMinutes).toBe(90);
+  });
+
+  it('rejects missing title', async () => {
+    const cookie = await registerAndGetCookie('alice@test.com');
+    const res = await request(app)
+      .post('/api/tasks/breakdown')
+      .set('Cookie', cookie)
+      .send({});
+    expect(res.status).toBe(400);
   });
 });
 
