@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useTasks, useUpdateTask, useCreateTask } from '../hooks/useTasks';
 import { useModules } from '../hooks/useModules';
 import { useGoogleEvents } from '../hooks/useGoogleCalendar';
-import type { Task } from '@studybuddy/shared';
+import { useCurrentPlan } from '../hooks/useStudyPlan';
+import type { Task, StudyPlanSession } from '@studybuddy/shared';
 import type { GoogleCalendarEvent } from '../hooks/useGoogleCalendar';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -78,14 +79,15 @@ interface DayCellProps {
   tasks: Task[];
   deadlines: DeadlineMark[];
   googleEvents: GoogleCalendarEvent[];
+  planSessions: StudyPlanSession[];
   isSelected: boolean;
   onClick: () => void;
 }
 
-function DayCell({ date, ymd, isCurrentMonth, tasks, deadlines, googleEvents, isSelected, onClick }: DayCellProps) {
+function DayCell({ date, ymd, isCurrentMonth, tasks, deadlines, googleEvents, planSessions, isSelected, onClick }: DayCellProps) {
   const isToday = ymd === TODAY;
   const dots = tasks.map(t => t.status === 'done' ? 'done' : 'todo');
-  const visible = dots.slice(0, 4);
+  const visible = dots.slice(0, 3);
   const extra = dots.length - visible.length;
 
   return (
@@ -107,6 +109,21 @@ function DayCell({ date, ymd, isCurrentMonth, tasks, deadlines, googleEvents, is
         )}
       </div>
 
+      {/* Study plan sessions */}
+      {planSessions.slice(0, 2).map((s, i) => (
+        <div
+          key={i}
+          className="text-[9px] leading-tight rounded px-1 py-0.5 truncate text-white font-medium"
+          style={{ backgroundColor: s.moduleColour }}
+          title={`${s.moduleName}: ${s.topic}`}
+        >
+          {s.startHour % 12 || 12}{s.startHour < 12 ? 'am' : 'pm'} {s.moduleName}
+        </div>
+      ))}
+      {planSessions.length > 2 && (
+        <span className="text-[9px] text-slate-400">+{planSessions.length - 2} sessions</span>
+      )}
+
       {dots.length > 0 && (
         <div className="flex flex-wrap items-center gap-0.5">
           {visible.map((kind, i) => (
@@ -119,7 +136,7 @@ function DayCell({ date, ymd, isCurrentMonth, tasks, deadlines, googleEvents, is
         </div>
       )}
 
-      {googleEvents.slice(0, 2).map(ev => (
+      {googleEvents.slice(0, 1).map(ev => (
         <div
           key={ev.id}
           className="text-[9px] leading-tight bg-slate-100 text-slate-500 rounded px-1 py-0.5 truncate"
@@ -129,8 +146,8 @@ function DayCell({ date, ymd, isCurrentMonth, tasks, deadlines, googleEvents, is
           {ev.title}
         </div>
       ))}
-      {googleEvents.length > 2 && (
-        <span className="text-[9px] text-slate-400">+{googleEvents.length - 2} more</span>
+      {googleEvents.length > 1 && (
+        <span className="text-[9px] text-slate-400">+{googleEvents.length - 1} more</span>
       )}
 
       {deadlines.length > 0 && (
@@ -149,9 +166,10 @@ interface DayPanelProps {
   tasks: Task[];
   deadlines: DeadlineMark[];
   googleEvents: GoogleCalendarEvent[];
+  planSessions: StudyPlanSession[];
 }
 
-function DayPanel({ date, tasks, deadlines, googleEvents }: DayPanelProps) {
+function DayPanel({ date, tasks, deadlines, googleEvents, planSessions }: DayPanelProps) {
   const updateTask = useUpdateTask();
   const createTask = useCreateTask();
   const [newTitle, setNewTitle] = useState('');
@@ -223,7 +241,24 @@ function DayPanel({ date, tasks, deadlines, googleEvents }: DayPanelProps) {
         </ul>
       )}
 
-      {tasks.length === 0 && deadlines.length === 0 && googleEvents.length === 0 && (
+      {planSessions.length > 0 && (
+        <ul className="space-y-1.5 mb-3">
+          {planSessions.map((s, i) => (
+            <li key={i} className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.moduleColour }} />
+              <span className="text-sm text-slate-600">
+                <span className="text-slate-400 mr-1">
+                  {s.startHour % 12 || 12}{s.startHour < 12 ? 'am' : 'pm'}
+                </span>
+                <span className="font-medium">{s.moduleName}</span>
+                {s.topic && <span className="text-slate-400"> — {s.topic}</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {tasks.length === 0 && deadlines.length === 0 && googleEvents.length === 0 && planSessions.length === 0 && (
         <p className="text-xs text-slate-400 mb-3">Nothing scheduled for this day.</p>
       )}
 
@@ -257,6 +292,7 @@ export function Calendar() {
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { data: modules = [] } = useModules();
+  const { data: plan } = useCurrentPlan();
 
   const monthStart = new Date(year, month, 1).toISOString();
   const monthEnd = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
@@ -287,6 +323,19 @@ export function Calendar() {
       const list = deadlineMap.get(ymd) ?? [];
       list.push({ label: `${type}: ${mod.name}`, colour: mod.colour });
       deadlineMap.set(ymd, list);
+    }
+  }
+
+  const planSessionMap = new Map<string, StudyPlanSession[]>();
+  if (plan) {
+    const weekStart = new Date(`${plan.weekStartDate}T00:00:00Z`);
+    for (const s of plan.sessions) {
+      const d = new Date(weekStart);
+      d.setUTCDate(d.getUTCDate() + s.dayOfWeek);
+      const ymd = d.toISOString().slice(0, 10);
+      const list = planSessionMap.get(ymd) ?? [];
+      list.push(s);
+      planSessionMap.set(ymd, list);
     }
   }
 
@@ -322,6 +371,7 @@ export function Calendar() {
   const selectedTasks = selected ? (taskMap.get(selected) ?? []) : [];
   const selectedDeadlines = selected ? (deadlineMap.get(selected) ?? []) : [];
   const selectedGoogleEvents = selected ? (googleEventMap.get(selected) ?? []) : [];
+  const selectedPlanSessions = selected ? (planSessionMap.get(selected) ?? []) : [];
 
   return (
     <div className="card-base p-4 sm:p-6">
@@ -352,6 +402,7 @@ export function Calendar() {
               tasks={taskMap.get(ymd) ?? []}
               deadlines={deadlineMap.get(ymd) ?? []}
               googleEvents={googleEventMap.get(ymd) ?? []}
+              planSessions={planSessionMap.get(ymd) ?? []}
               isSelected={selected === ymd}
               onClick={() => setSelected(prev => prev === ymd ? null : ymd)}
             />
@@ -366,6 +417,7 @@ export function Calendar() {
           tasks={selectedTasks}
           deadlines={selectedDeadlines}
           googleEvents={selectedGoogleEvents}
+          planSessions={selectedPlanSessions}
         />
       )}
     </div>

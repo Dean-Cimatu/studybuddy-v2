@@ -34,6 +34,14 @@ function getWeekStartDate(): string {
   return monday.toISOString().slice(0, 10);
 }
 
+function weekDayLabels(weekStartDate: string): string[] {
+  return DAYS.map((d, i) => {
+    const date = new Date(`${weekStartDate}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + i);
+    return `${d} ${date.getUTCDate()}`;
+  });
+}
+
 // ── Session block ─────────────────────────────────────────────────────────────
 
 interface SessionBlockProps {
@@ -52,14 +60,16 @@ function SessionBlock({ session, active, onActivate, onClose, onRemove, onMove }
 
   return (
     <div
-      className="absolute left-0.5 right-0.5 rounded-md px-1.5 py-1 overflow-hidden cursor-pointer select-none z-10 shadow-sm"
+      className="absolute left-0.5 right-0.5 rounded-md px-1.5 py-1 overflow-hidden cursor-pointer select-none z-10 shadow-sm ring-2 ring-transparent hover:ring-white/50 transition-all"
       style={{ top, height, backgroundColor: session.moduleColour }}
       onClick={e => { e.stopPropagation(); if (active) onClose(); else onActivate(); }}
     >
-      <p className="text-[10px] text-white/80 leading-tight">{fmt12(session.startHour)}</p>
-      <p className="text-xs font-semibold text-white leading-tight truncate">{session.moduleName}</p>
-      {height > 40 && (
-        <p className="text-[10px] text-white/80 leading-tight truncate">{session.topic}</p>
+      <p className="text-[10px] text-white/80 leading-tight">{fmt12(session.startHour)} · {fmtDuration(session.durationMinutes)}</p>
+      {height > 36 && (
+        <p className="text-xs font-semibold text-white leading-tight truncate">{session.topic || session.moduleName}</p>
+      )}
+      {height > 52 && session.topic && (
+        <p className="text-[10px] text-white/70 leading-tight truncate">{session.moduleName}</p>
       )}
 
       {active && (
@@ -173,7 +183,7 @@ function WeeklyGrid({ sessions, weekStartDate, onRemove, onMove }: WeeklyGridPro
       <div className="min-w-[640px]">
         {/* Day headers */}
         <div className="flex ml-10 mb-1">
-          {DAYS.map(d => (
+          {weekDayLabels(weekStartDate).map(d => (
             <div key={d} className="flex-1 text-xs font-medium text-slate-500 text-center">{d}</div>
           ))}
         </div>
@@ -416,11 +426,15 @@ export function StudyPlanView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-slate-800">This Week — {totalHours}h planned</h2>
-          <p className="text-xs text-slate-400">{getWeekStartDate()}</p>
+          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">This Week — {totalHours}h planned</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Click a session to start, move, or remove it</p>
         </div>
         <button
-          onClick={() => generate.mutate({ pushToGoogleCalendar: false })}
+          onClick={() => {
+            if (confirm('Regenerate your plan? Your current sessions will be replaced.')) {
+              generate.mutate({ pushToGoogleCalendar: false });
+            }
+          }}
           disabled={generate.isPending}
           className="btn-secondary text-xs px-3 py-1.5"
         >
