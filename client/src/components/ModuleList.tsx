@@ -154,15 +154,17 @@ function ModuleModal({
             >
               {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
             </select>
-            <input
-              type="number"
-              className={`w-28 ${inputCls}`}
-              placeholder="Hrs/week"
-              value={form.weeklyTargetHours}
-              onChange={e => setForm(f => ({ ...f, weeklyTargetHours: e.target.value }))}
-              min={0}
-              max={40}
-            />
+            <label className="flex flex-col gap-1 w-28">
+              <span className="text-xs text-slate-400">hrs / week</span>
+              <input
+                type="number"
+                className={inputCls}
+                value={form.weeklyTargetHours}
+                onChange={e => setForm(f => ({ ...f, weeklyTargetHours: e.target.value }))}
+                min={0}
+                max={40}
+              />
+            </label>
           </div>
           <textarea
             className={`${inputCls} resize-none`}

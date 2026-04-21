@@ -13,7 +13,6 @@ const ACCENT_COLOURS = [
   { value: 'amber',  bg: 'bg-amber-500' },
 ] as const;
 
-const SESSION_LENGTHS = [25, 50, 90] as const;
 const STUDY_TIMES = [
   { value: 'morning',       label: 'Morning' },
   { value: 'afternoon',     label: 'Afternoon' },
@@ -62,7 +61,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 export function SettingsPage() {
   const { user, updateUser, darkMode, toggleDarkMode, logout } = useAuth();
   const navigate = useNavigate();
-  const [customHoursMode, setCustomHoursMode] = useState(() => (user?.studyGoalHours ?? 15) > 40);
+  const [customHoursMode, setCustomHoursMode] = useState(false);
 
   const [displayName, setDisplayName]   = useState(user?.displayName ?? '');
   const [discipline, setDiscipline]     = useState(user?.discipline ?? '');
@@ -72,9 +71,6 @@ export function SettingsPage() {
   const [linkedinUrl, setLinkedinUrl]   = useState(user?.linkedinUrl ?? '');
   const [githubUrl, setGithubUrl]       = useState(user?.githubUrl ?? '');
   const [goalHours, setGoalHours]       = useState(user?.studyGoalHours ?? 15);
-  const [sessionLength, setSessionLength] = useState<25 | 50 | 90>(
-    (user?.preferredSessionLength as 25 | 50 | 90) ?? 25
-  );
   const [studyTime, setStudyTime] = useState(user?.preferredStudyTime ?? 'no-preference');
   const [accent, setAccent]       = useState(user?.themeAccent ?? 'blue');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -242,58 +238,51 @@ export function SettingsPage() {
           <SectionTitle>Study Preferences</SectionTitle>
           <div className="space-y-5">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Weekly study goal: <span className="text-blue-500 font-semibold">{goalHours}h</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setCustomHoursMode(m => !m)}
-                  className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
-                >
-                  {customHoursMode ? 'Use slider' : 'Custom'}
-                </button>
-              </div>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200 block mb-2">
+                Weekly study goal: <span className="text-blue-500 font-semibold">{goalHours}h</span>
+              </label>
+              <input
+                type="range"
+                min={5}
+                max={40}
+                value={Math.min(goalHours, 40)}
+                onChange={e => { const val = Number(e.target.value); setGoalHours(val); scheduleSave({ studyGoalHours: val }); }}
+                className="w-full accent-blue-500"
+              />
+              <div className="flex justify-between text-xs text-slate-400 mt-1 mb-2"><span>5h</span><span>40h</span></div>
               {customHoursMode ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mt-2">
                   <input
                     type="number"
-                    min={5}
+                    min={41}
                     max={168}
-                    value={goalHours}
+                    value={goalHours > 40 ? goalHours : 41}
                     onChange={e => {
-                      const val = Math.min(168, Math.max(5, Number(e.target.value)));
+                      const val = Math.min(168, Math.max(41, Number(e.target.value)));
                       setGoalHours(val);
                       scheduleSave({ studyGoalHours: val });
                     }}
                     className="w-24 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:border-blue-400 transition-colors"
+                    autoFocus
                   />
                   <span className="text-sm text-slate-500 dark:text-slate-400">hours / week</span>
+                  <button
+                    type="button"
+                    onClick={() => { setCustomHoursMode(false); setGoalHours(40); scheduleSave({ studyGoalHours: 40 }); }}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ml-auto"
+                  >
+                    Back to slider
+                  </button>
                 </div>
               ) : (
-                <>
-                  <input
-                    type="range"
-                    min={5}
-                    max={40}
-                    value={Math.min(goalHours, 40)}
-                    onChange={e => { const val = Number(e.target.value); setGoalHours(val); scheduleSave({ studyGoalHours: val }); }}
-                    className="w-full accent-blue-500"
-                  />
-                  <div className="flex justify-between text-xs text-slate-400 mt-1"><span>5h</span><span>40h</span></div>
-                </>
+                <button
+                  type="button"
+                  onClick={() => setCustomHoursMode(true)}
+                  className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
+                >
+                  Need more than 40h? →
+                </button>
               )}
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Session length</p>
-              <div className="flex gap-2">
-                {SESSION_LENGTHS.map(l => (
-                  <button key={l} onClick={() => { setSessionLength(l); scheduleSave({ preferredSessionLength: l }); }} className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${pillBtn(sessionLength === l)}`}>
-                    {l} min
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div>
