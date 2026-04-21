@@ -5,7 +5,7 @@ import type { PomodoroSettings } from '../hooks/usePomodoro';
 import { useLogSession } from '../hooks/useStats';
 import { useModules } from '../hooks/useModules';
 import type { Module } from '@studybuddy/shared';
-import { playWorkEnd, playBreakEnd } from '../utils/sounds';
+import { playWorkEnd, playBreakEnd, startAmbient, stopAmbient, type AmbientType } from '../utils/sounds';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -24,6 +24,12 @@ function notify(title: string, body: string) {
 }
 
 const SESSION_DOTS = 4;
+const AMBIENT_OPTIONS: { value: AmbientType; label: string }[] = [
+  { value: 'none', label: 'None' },
+  { value: 'white', label: 'White noise' },
+  { value: 'brown', label: 'Brown noise' },
+  { value: 'rain', label: 'Rain' },
+];
 
 export function PomodoroTimer() {
   const logSession = useLogSession();
@@ -32,6 +38,9 @@ export function PomodoroTimer() {
   const [showSettings, setShowSettings] = useState(false);
   const [logged, setLogged] = useState(false);
   const [settings, setSettings] = useState<PomodoroSettings>(() => loadPomodoroSettings());
+  const [ambient, setAmbient] = useState<AmbientType>('none');
+  const [sessionNotes, setSessionNotes] = useState('');
+  const [showNotes, setShowNotes] = useState(false);
 
   const [draftWork, setDraftWork] = useState(settings.workMinutes);
   const [draftShort, setDraftShort] = useState(settings.shortBreakMinutes);
@@ -42,12 +51,20 @@ export function PomodoroTimer() {
   const sessionStartRef = useRef<string | null>(null);
   const prevIsRunningRef = useRef(false);
   const prevIsBreakRef = useRef(false);
+  const notesRef = useRef(sessionNotes);
+  notesRef.current = sessionNotes;
 
   const timer = usePomodoro((durationMinutes, tag, name) => {
     const endTime = new Date().toISOString();
     const startTime = sessionStartRef.current ?? new Date(Date.now() - durationMinutes * 60000).toISOString();
-    logSession.mutate({ startTime, endTime, durationMinutes, type: 'pomodoro', moduleTag: tag ?? undefined, moduleName: name ?? undefined });
+    logSession.mutate({
+      startTime, endTime, durationMinutes, type: 'pomodoro',
+      moduleTag: tag ?? undefined, moduleName: name ?? undefined,
+      notes: notesRef.current || undefined,
+    });
     setLogged(true);
+    setSessionNotes('');
+    setShowNotes(false);
     setTimeout(() => setLogged(false), 2000);
     playWorkEnd();
     notify('Session complete!', tag ? `Great work on ${tag}. Take a break.` : 'Great work! Take a break.');
@@ -61,16 +78,28 @@ export function PomodoroTimer() {
     prevIsRunningRef.current = timer.isRunning;
   }, [timer.isRunning, timer.isBreak]);
 
-  // Detect break ending → play sound + notify
+  // Detect break ending
   useEffect(() => {
     if (!timer.isBreak && prevIsBreakRef.current && timer.isRunning) {
       playBreakEnd();
-      notify('Break over', 'Time to focus. You\'ve got this!');
+      notify('Break over', "Time to focus. You've got this!");
     }
     prevIsBreakRef.current = timer.isBreak;
   }, [timer.isBreak, timer.isRunning]);
 
-  // Update browser tab title while running
+  // Ambient sound: start on focus, stop on break/pause
+  useEffect(() => {
+    if (timer.isRunning && !timer.isBreak && ambient !== 'none') {
+      startAmbient(ambient);
+    } else {
+      stopAmbient();
+    }
+  }, [timer.isRunning, timer.isBreak, ambient]);
+
+  // Stop ambient on unmount
+  useEffect(() => () => stopAmbient(), []);
+
+  // Browser tab title
   useEffect(() => {
     if (timer.isRunning) {
       const label = timer.isBreak ? 'Break' : 'Study';
@@ -108,7 +137,6 @@ export function PomodoroTimer() {
 
   function handlePlay() {
     if (!showPicker) {
-      // Request notification permission on first start
       if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
         void Notification.requestPermission();
       }
@@ -149,33 +177,54 @@ export function PomodoroTimer() {
     : formatTime(workSecs);
 
   const floatingTimer = timer.isRunning ? createPortal(
-    <div className="fixed bottom-5 right-5 z-40 bg-white rounded-2xl shadow-xl border border-slate-200 px-4 py-3 flex items-center gap-3 select-none">
-      <div className="flex gap-0.5">
-        {Array.from({ length: SESSION_DOTS }).map((_, i) => (
-          <span
-            key={i}
-            className={`w-1.5 h-1.5 rounded-full ${
-              i < (timer.sessionCount % SESSION_DOTS) || (timer.sessionCount >= SESSION_DOTS && i < SESSION_DOTS)
-                ? 'bg-blue-500' : 'bg-slate-200'
-            }`}
+    <div className="fixed bottom-5 right-5 z-40 bg-white rounded-2xl shadow-xl border border-slate-200 select-none">
+      <div className="px-4 py-3 flex items-center gap-3">
+        <div className="flex gap-0.5">
+          {Array.from({ length: SESSION_DOTS }).map((_, i) => (
+            <span
+              key={i}
+              className={`w-1.5 h-1.5 rounded-full ${
+                i < (timer.sessionCount % SESSION_DOTS) || (timer.sessionCount >= SESSION_DOTS && i < SESSION_DOTS)
+                  ? 'bg-blue-500' : 'bg-slate-200'
+              }`}
+            />
+          ))}
+        </div>
+        <div>
+          <p className="text-xs text-slate-400 leading-none mb-0.5">{timer.isBreak ? 'Break' : 'Study'}</p>
+          <p className={`font-bold text-base tabular-nums leading-none ${timer.isBreak ? 'text-emerald-500' : 'text-blue-500'}`}>
+            {displayTime}
+          </p>
+        </div>
+        {!timer.isBreak && (
+          <button
+            onClick={() => setShowNotes(v => !v)}
+            className={`text-slate-400 hover:text-blue-400 transition-colors p-0.5 ${showNotes ? 'text-blue-400' : ''}`}
+            title="Session notes"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+        )}
+        <button onClick={timer.pause} className="text-slate-400 hover:text-amber-500 transition-colors p-0.5" title="Pause">
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      {showNotes && (
+        <div className="px-4 pb-3 border-t border-slate-100 pt-2">
+          <textarea
+            className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:border-blue-400 text-slate-700 placeholder-slate-300"
+            placeholder="Notes for this session…"
+            rows={3}
+            maxLength={500}
+            value={sessionNotes}
+            onChange={e => setSessionNotes(e.target.value)}
           />
-        ))}
-      </div>
-      <div>
-        <p className="text-xs text-slate-400 leading-none mb-0.5">{timer.isBreak ? 'Break' : 'Study'}</p>
-        <p className={`font-bold text-base tabular-nums leading-none ${timer.isBreak ? 'text-emerald-500' : 'text-blue-500'}`}>
-          {displayTime}
-        </p>
-      </div>
-      <button
-        onClick={timer.pause}
-        className="text-slate-400 hover:text-amber-500 transition-colors p-0.5"
-        title="Pause"
-      >
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-        </svg>
-      </button>
+        </div>
+      )}
     </div>,
     document.body
   ) : null;
@@ -196,22 +245,18 @@ export function PomodoroTimer() {
           ))}
         </div>
 
-        {/* Time */}
         <span className={`font-semibold text-sm tabular-nums ${timer.isRunning ? timeColour : 'text-slate-700'}`}>
           {timer.isBreak && timer.isRunning ? `Break ${displayTime}` : displayTime}
         </span>
 
-        {/* Module chip */}
         {timer.moduleTag && (
           <span className="text-xs bg-slate-100 text-slate-600 rounded-full px-2 py-0.5 max-w-[80px] truncate">
             {timer.moduleTag}
           </span>
         )}
 
-        {/* Logged flash */}
         {logged && <span className="text-xs text-emerald-500 animate-pulse">+logged</span>}
 
-        {/* Controls */}
         <div className="flex items-center gap-1">
           {!timer.isRunning ? (
             <button className="btn-ghost p-1 text-slate-600 hover:text-blue-500" onClick={handlePlay} title="Start">
@@ -272,7 +317,7 @@ export function PomodoroTimer() {
                 </div>
               </>
             ) : (
-              <div className="p-3 w-56 space-y-3">
+              <div className="p-3 w-64 space-y-3">
                 <div className="flex items-center gap-2">
                   <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -302,6 +347,24 @@ export function PomodoroTimer() {
                     <input type="number" min={1} max={8} value={draftSessions} onChange={e => setDraftSessions(Number(e.target.value))}
                       className="w-16 text-xs text-center border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400" />
                   </label>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5">Ambient sound</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {AMBIENT_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setAmbient(opt.value)}
+                        className={`text-xs py-1.5 rounded-lg border transition-colors ${
+                          ambient === opt.value
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex gap-2 pt-1">
                   <button onClick={() => setShowSettings(false)} className="flex-1 text-xs text-slate-400 hover:text-slate-600 py-1.5 rounded-lg border border-slate-200 transition-colors">

@@ -10,6 +10,11 @@ export interface GoogleTokens {
 export interface UserDocument extends Omit<User, 'id' | 'createdAt'>, Document {
   passwordHash: string;
   googleTokens: GoogleTokens;
+  university: string;
+  yearOfStudy: string;
+  bio: string;
+  linkedinUrl: string;
+  githubUrl: string;
 }
 
 const userSchema = new Schema<UserDocument>(

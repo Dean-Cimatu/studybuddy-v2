@@ -9,8 +9,8 @@ import { WeeklyProgress } from '../components/WeeklyProgress';
 import { PomodoroTimer } from '../components/PomodoroTimer';
 import { StatsPanel } from '../components/StatsPanel';
 import { Heatmap } from '../components/Heatmap';
+import { WeeklyReport } from '../components/WeeklyReport';
 import { TaskList } from '../components/TaskList';
-import { ModuleList } from '../components/ModuleList';
 import { StudyPlanView } from '../components/StudyPlanView';
 import { Calendar } from '../components/Calendar';
 import { GroupList } from '../components/GroupList';
@@ -21,7 +21,6 @@ import type { Module, ModuleDeadline } from '@studybuddy/shared';
 
 const TABS = [
   { id: 'home', label: 'Home' },
-  { id: 'modules', label: 'Modules' },
   { id: 'planner', label: 'Planner' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'social', label: 'Social' },
@@ -70,50 +69,6 @@ function UpcomingDeadlines({ modules }: { modules: Module[] }) {
   );
 }
 
-function CompactModuleList({ modules, onAdd }: { modules: Module[]; onAdd?: () => void }) {
-  return (
-    <div className="card-base p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-700">Modules</h3>
-        {onAdd && (
-          <button onClick={onAdd} className="text-xs text-blue-500 hover:text-blue-700 transition-colors">
-            + Add
-          </button>
-        )}
-      </div>
-      {modules.length === 0 ? (
-        <div className="text-center py-3">
-          <p className="text-sm text-slate-400 mb-2">No modules yet.</p>
-          {onAdd && (
-            <button onClick={onAdd} className="text-xs text-blue-500 hover:text-blue-700 transition-colors">
-              Add your first module →
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {modules.map(mod => {
-            const nextDeadline = mod.deadlines
-              ?.filter(d => new Date(d.date) >= new Date())
-              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-            return (
-              <div key={mod._id} className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: mod.colour }} />
-                <span className="text-sm text-slate-700 flex-1 truncate">{mod.name}</span>
-                {nextDeadline && (
-                  <span className="text-xs text-slate-400 shrink-0">
-                    {new Date(nextDeadline.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -121,7 +76,6 @@ export function DashboardPage() {
   const [calendarToast, setCalendarToast] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileTasksOpen, setMobileTasksOpen] = useState(false);
-  const [mobileModulesOpen, setMobileModulesOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   const { data: modules = [], isLoading: modulesLoading } = useModules();
@@ -169,7 +123,6 @@ export function DashboardPage() {
 
       {/* Top bar */}
       <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex items-center gap-3">
-        {/* Left */}
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-semibold text-slate-800 text-base truncate">
             Hey, {user?.displayName?.split(' ')[0]}!
@@ -177,7 +130,6 @@ export function DashboardPage() {
           {stats && <StreakBadge streak={stats.currentStreak} />}
         </div>
 
-        {/* Center */}
         {stats && (
           <div className="hidden md:block w-48 flex-shrink-0 mx-auto">
             <WeeklyProgress
@@ -188,7 +140,6 @@ export function DashboardPage() {
           </div>
         )}
 
-        {/* Right */}
         <div className="ml-auto flex items-center gap-2">
           <div className="hidden md:flex items-center">
             <PomodoroTimer />
@@ -209,7 +160,6 @@ export function DashboardPage() {
           >
             Sign out
           </button>
-          {/* Mobile hamburger */}
           <button
             className="md:hidden p-1.5 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100"
             onClick={() => setMobileMenuOpen(v => !v)}
@@ -221,7 +171,6 @@ export function DashboardPage() {
         </div>
       </header>
 
-      {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 space-y-2">
           <div className="flex items-center justify-center">
@@ -236,19 +185,13 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* TabNav */}
       <div className="bg-white px-4 md:px-6">
         <TabNav tabs={TABS} activeTab={activeTab} onChange={setTab} />
       </div>
 
-      {/* Main content */}
       <div className="flex flex-1 gap-6 px-4 md:px-6 py-6 min-h-0">
-        {/* Left / main column */}
         <main className="flex-1 min-w-0 max-w-full">
-          <div
-            key={activeTab}
-            className="transition-opacity duration-200 animate-fadeIn"
-          >
+          <div key={activeTab} className="transition-opacity duration-200 animate-fadeIn">
             {activeTab === 'home' && (
               <div className="space-y-6">
                 <StatsPanel />
@@ -259,13 +202,15 @@ export function DashboardPage() {
                   <button onClick={() => setTab('calendar')} className="btn-secondary px-5 py-2.5">
                     View Calendar
                   </button>
+                  <Link to="/flashcards" className="btn-secondary px-5 py-2.5">
+                    Flashcards
+                  </Link>
                 </div>
+                <WeeklyReport />
                 <Heatmap />
                 <UpcomingDeadlines modules={modules} />
               </div>
             )}
-
-            {activeTab === 'modules' && <ModuleList />}
 
             {activeTab === 'planner' && <StudyPlanView />}
 
@@ -274,10 +219,7 @@ export function DashboardPage() {
             {activeTab === 'social' && (
               <div className="flex gap-6">
                 <div className="w-72 shrink-0 space-y-4">
-                  <GroupList
-                    selectedGroupId={selectedGroupId}
-                    onSelectGroup={setSelectedGroupId}
-                  />
+                  <GroupList selectedGroupId={selectedGroupId} onSelectGroup={setSelectedGroupId} />
                   {selectedGroupId && (
                     <div className="card-base p-4">
                       <h3 className="text-sm font-semibold text-slate-700 mb-3">Members</h3>
@@ -301,7 +243,7 @@ export function DashboardPage() {
             )}
           </div>
 
-          {/* Mobile: collapsible Tasks & Modules */}
+          {/* Mobile: collapsible Tasks */}
           <div className="md:hidden mt-6 space-y-3">
             <button
               onClick={() => setMobileTasksOpen(v => !v)}
@@ -315,25 +257,9 @@ export function DashboardPage() {
                 <TaskList />
               </div>
             )}
-
-            <button
-              onClick={() => setMobileModulesOpen(v => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 card-base"
-            >
-              <span className="font-medium text-slate-700 text-sm">
-                Modules ({modules.length})
-              </span>
-              <span className="text-slate-400 text-xs">{mobileModulesOpen ? '▲' : '▼'}</span>
-            </button>
-            {mobileModulesOpen && (
-              <div className="card-base p-4">
-                <CompactModuleList modules={modules} onAdd={() => setTab('modules')} />
-              </div>
-            )}
           </div>
         </main>
 
-        {/* Right column — only on Home tab */}
         {activeTab === 'home' && (
           <aside className="hidden md:flex flex-col gap-4 w-80 shrink-0">
             <div className="card-base p-4">

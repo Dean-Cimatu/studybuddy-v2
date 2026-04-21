@@ -17,6 +17,7 @@ export interface ModuleDocument extends Document {
   colour: string;
   language: string;
   topics: string[];
+  topicProgress: Map<string, string>;
   weeklyTargetHours: number;
   deadlines: ModuleDeadlineDocument[];
   notes: string | null;
@@ -39,6 +40,7 @@ const moduleSchema = new Schema<ModuleDocument>(
     colour: { type: String, default: '#3B82F6' },
     language: { type: String, default: 'en' },
     topics: { type: [String], default: [] },
+    topicProgress: { type: Map, of: String, default: {} },
     weeklyTargetHours: { type: Number, default: 3, min: 0, max: 40 },
     deadlines: { type: [deadlineSchema], default: [] },
     notes: { type: String, default: null },

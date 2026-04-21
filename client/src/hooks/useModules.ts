@@ -148,3 +148,16 @@ export function useDeleteDeadline() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: MODULES_KEY }),
   });
 }
+
+export function useUpdateTopicProgress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ moduleId, topic, confidence }: { moduleId: string; topic: string; confidence: string }) =>
+      apiFetch<{ module: Module }>(`/api/modules/${moduleId}/topic-progress`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, confidence }),
+      }).then(d => d.module),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MODULES_KEY }),
+  });
+}

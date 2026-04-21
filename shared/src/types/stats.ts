@@ -14,6 +14,7 @@ export interface StudySession {
 export interface DashboardStats {
   studyMinutesToday: number;
   studyMinutesThisWeek: number;
+  studyMinutesLastWeek: number;
   totalStudyMinutes: number;
   tasksCompletedToday: number;
   tasksCompletedThisWeek: number;
@@ -22,6 +23,10 @@ export interface DashboardStats {
   weeklyGoalHours: number;
   weeklyGoalProgress: number;
   studyScoreThisWeek: number;
+  longestSessionMinutes: number;
+  avgSessionMinutes: number;
+  mostStudiedModule: string | null;
+  sessionsThisWeek: number;
 }
 
 export interface StudyHistoryDay {

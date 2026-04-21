@@ -60,9 +60,14 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response) => {
     const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     const weekStart = getWeekStartUTC();
 
-    const [todaySessions, weekSessions, user, todayTasks, weekTasks] = await Promise.all([
+    const lastWeekStart = new Date(weekStart);
+    lastWeekStart.setUTCDate(lastWeekStart.getUTCDate() - 7);
+
+    const [todaySessions, weekSessions, lastWeekSessions, allSessions, user, todayTasks, weekTasks] = await Promise.all([
       StudySessionModel.find({ userId, startTime: { $gte: todayStart } }),
       StudySessionModel.find({ userId, startTime: { $gte: weekStart } }),
+      StudySessionModel.find({ userId, startTime: { $gte: lastWeekStart, $lt: weekStart } }),
+      StudySessionModel.find({ userId }).sort({ durationMinutes: -1 }).limit(100),
       UserModel.findById(userId),
       TaskModel.find({ userId: userIdStr, status: 'done', updatedAt: { $gte: todayStart } }),
       TaskModel.find({ userId: userIdStr, status: 'done', updatedAt: { $gte: weekStart } }),
@@ -70,12 +75,28 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response) => {
 
     const studyMinutesToday = todaySessions.reduce((s, x) => s + x.durationMinutes, 0);
     const studyMinutesThisWeek = weekSessions.reduce((s, x) => s + x.durationMinutes, 0);
+    const studyMinutesLastWeek = lastWeekSessions.reduce((s, x) => s + x.durationMinutes, 0);
     const weeklyGoalHours = user?.studyGoalHours ?? 15;
     const weeklyGoalProgress = Math.min(100, Math.round((studyMinutesThisWeek / (weeklyGoalHours * 60)) * 100));
+
+    const longestSessionMinutes = allSessions[0]?.durationMinutes ?? 0;
+    const avgSessionMinutes = allSessions.length > 0
+      ? Math.round(allSessions.reduce((s, x) => s + x.durationMinutes, 0) / allSessions.length)
+      : 0;
+
+    // Most studied module (all time)
+    const moduleMinutes: Record<string, number> = {};
+    for (const s of allSessions) {
+      if (s.moduleTag) moduleMinutes[s.moduleTag] = (moduleMinutes[s.moduleTag] ?? 0) + s.durationMinutes;
+    }
+    const mostStudiedModule = Object.keys(moduleMinutes).length > 0
+      ? Object.entries(moduleMinutes).sort((a, b) => b[1] - a[1])[0][0]
+      : null;
 
     return res.json({
       studyMinutesToday,
       studyMinutesThisWeek,
+      studyMinutesLastWeek,
       totalStudyMinutes: user?.totalStudyMinutes ?? 0,
       tasksCompletedToday: todayTasks.length,
       tasksCompletedThisWeek: weekTasks.length,
@@ -84,6 +105,10 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response) => {
       weeklyGoalHours,
       weeklyGoalProgress,
       studyScoreThisWeek: weeklyGoalProgress,
+      longestSessionMinutes,
+      avgSessionMinutes,
+      mostStudiedModule,
+      sessionsThisWeek: weekSessions.length,
     });
   } catch (err) {
     console.error('Dashboard stats error:', err);

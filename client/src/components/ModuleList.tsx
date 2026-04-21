@@ -7,9 +7,11 @@ import {
   useAddDeadline,
   useUpdateDeadline,
   useDeleteDeadline,
+  useUpdateTopicProgress,
   type CreateModuleInput,
   type CreateDeadlineInput,
 } from '../hooks/useModules';
+import type { TopicConfidence } from '@studybuddy/shared';
 import { DeadlineCountdown } from './DeadlineCountdown';
 
 const PRESET_COLOURS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899'];
@@ -228,6 +230,41 @@ function DeadlineModal({ moduleId, onClose }: { moduleId: string; onClose: () =>
   );
 }
 
+const CONFIDENCE_CYCLE: Record<TopicConfidence, TopicConfidence> = {
+  'not-started': 'in-progress',
+  'in-progress': 'confident',
+  'confident': 'not-started',
+};
+
+const CONFIDENCE_STYLE: Record<TopicConfidence, string> = {
+  'not-started': 'bg-slate-100 text-slate-500 border-slate-200',
+  'in-progress': 'bg-amber-50 text-amber-700 border-amber-200',
+  'confident': 'bg-emerald-50 text-emerald-700 border-emerald-300',
+};
+
+const CONFIDENCE_LABEL: Record<TopicConfidence, string> = {
+  'not-started': '○',
+  'in-progress': '◑',
+  'confident': '●',
+};
+
+function TopicChip({ moduleId, topic, progress }: { moduleId: string; topic: string; progress: TopicConfidence }) {
+  const update = useUpdateTopicProgress();
+  function handleClick() {
+    update.mutate({ moduleId, topic, confidence: CONFIDENCE_CYCLE[progress] });
+  }
+  return (
+    <button
+      onClick={handleClick}
+      title={progress.replace('-', ' ')}
+      className={`text-xs rounded-full px-2 py-0.5 border flex items-center gap-1 transition-colors hover:opacity-80 ${CONFIDENCE_STYLE[progress]}`}
+    >
+      <span>{CONFIDENCE_LABEL[progress]}</span>
+      <span>{topic}</span>
+    </button>
+  );
+}
+
 function ModuleCard({ module }: { module: Module }) {
   const [showDeadlineModal, setShowDeadlineModal] = useState(false);
   const deleteModule = useDeleteModule();
@@ -257,10 +294,14 @@ function ModuleCard({ module }: { module: Module }) {
       </div>
 
       {module.topics && module.topics.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
-          {module.topics.map(topic => (
-            <span key={topic} className="text-xs bg-slate-100 text-slate-600 rounded-full px-2 py-0.5">{topic}</span>
-          ))}
+        <div className="mt-2">
+          <p className="text-xs text-slate-400 mb-1.5">Topics — click to update confidence</p>
+          <div className="flex flex-wrap gap-1">
+            {module.topics.map(topic => {
+              const progress = (module.topicProgress?.[topic] ?? 'not-started') as TopicConfidence;
+              return <TopicChip key={topic} moduleId={module._id} topic={topic} progress={progress} />;
+            })}
+          </div>
         </div>
       )}
 

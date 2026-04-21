@@ -41,6 +41,14 @@ function CheckIcon() {
   );
 }
 
+function TrophyIcon() {
+  return (
+    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+    </svg>
+  );
+}
+
 function StatCard({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="card-base p-4">
@@ -56,30 +64,42 @@ function SkeletonCard() {
   return <div className="card-base h-[88px] skeleton" />;
 }
 
+function WeekComparison({ thisWeek, lastWeek }: { thisWeek: number; lastWeek: number }) {
+  if (lastWeek === 0) return null;
+  const pct = Math.round(((thisWeek - lastWeek) / lastWeek) * 100);
+  const up = pct >= 0;
+  return (
+    <p className={`text-xs mt-0.5 ${up ? 'text-emerald-500' : 'text-red-400'}`}>
+      {up ? '▲' : '▼'} {Math.abs(pct)}% vs last week
+    </p>
+  );
+}
+
 export function StatsPanel() {
   const { data, isLoading, isError } = useDashboardStats();
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
+        </div>
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {['Study Today', 'This Week', 'Streak', 'Tasks Today'].map(label => (
           <div key={label} className="card-base p-4">
             <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">{label}</p>
             <p className="text-2xl font-bold text-slate-300">--</p>
           </div>
         ))}
-        <p className="col-span-2 md:col-span-4 text-xs text-slate-400 text-center -mt-2">Could not load stats</p>
       </div>
     );
   }
@@ -87,33 +107,63 @@ export function StatsPanel() {
   const streakHighlight = data.currentStreak >= 7;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <StatCard icon={<ClockIcon />} label="Study Today">
-        <p className="text-2xl font-bold text-slate-800">{formatMinutes(data.studyMinutesToday)}</p>
-      </StatCard>
+    <div className="space-y-3">
+      {/* Row 1: primary stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard icon={<ClockIcon />} label="Study Today">
+          <p className="text-2xl font-bold text-slate-800">{formatMinutes(data.studyMinutesToday)}</p>
+        </StatCard>
 
-      <StatCard icon={<ChartIcon />} label="This Week">
-        <p className="text-2xl font-bold text-slate-800">{formatMinutes(data.studyMinutesThisWeek)}</p>
-        <p className="text-xs text-slate-400 mt-0.5">/ {data.weeklyGoalHours}h goal</p>
-        <div className="h-1 rounded-full bg-slate-100 mt-1.5 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-blue-500 transition-all duration-500"
-            style={{ width: `${Math.min(100, data.weeklyGoalProgress)}%` }}
-          />
+        <StatCard icon={<ChartIcon />} label="This Week">
+          <p className="text-2xl font-bold text-slate-800">{formatMinutes(data.studyMinutesThisWeek)}</p>
+          <p className="text-xs text-slate-400 mt-0.5">/ {data.weeklyGoalHours}h goal</p>
+          <div className="h-1 rounded-full bg-slate-100 mt-1.5 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-blue-500 transition-all duration-500"
+              style={{ width: `${Math.min(100, data.weeklyGoalProgress)}%` }}
+            />
+          </div>
+          <WeekComparison thisWeek={data.studyMinutesThisWeek} lastWeek={data.studyMinutesLastWeek} />
+        </StatCard>
+
+        <div className={`card-base p-4 transition-shadow ${streakHighlight ? 'ring-1 ring-orange-200 shadow-orange-50 shadow-md' : ''}`}>
+          <p className="flex items-center gap-1.5 text-xs text-slate-500 uppercase tracking-wide mb-1">
+            <FlameIcon /> Streak
+          </p>
+          <p className="text-2xl font-bold text-slate-800">{data.currentStreak}</p>
+          <p className="text-xs text-slate-400">days · best {data.longestStreak}</p>
         </div>
-      </StatCard>
 
-      <div className={`card-base p-4 transition-shadow ${streakHighlight ? 'ring-1 ring-orange-200 shadow-orange-50 shadow-md' : ''}`}>
-        <p className="flex items-center gap-1.5 text-xs text-slate-500 uppercase tracking-wide mb-1">
-          <FlameIcon /> Streak
-        </p>
-        <p className="text-2xl font-bold text-slate-800">{data.currentStreak}</p>
-        <p className="text-xs text-slate-400">days</p>
+        <StatCard icon={<CheckIcon />} label="Tasks Today">
+          <p className="text-2xl font-bold text-slate-800">{data.tasksCompletedToday}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{data.tasksCompletedThisWeek} this week</p>
+        </StatCard>
       </div>
 
-      <StatCard icon={<CheckIcon />} label="Tasks Today">
-        <p className="text-2xl font-bold text-slate-800">{data.tasksCompletedToday}</p>
-      </StatCard>
+      {/* Row 2: extended stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard icon={<ClockIcon />} label="Sessions This Week">
+          <p className="text-2xl font-bold text-slate-800">{data.sessionsThisWeek}</p>
+        </StatCard>
+
+        <StatCard icon={<TrophyIcon />} label="Longest Session">
+          <p className="text-2xl font-bold text-slate-800">
+            {data.longestSessionMinutes > 0 ? formatMinutes(data.longestSessionMinutes) : '—'}
+          </p>
+        </StatCard>
+
+        <StatCard icon={<ChartIcon />} label="Avg Session">
+          <p className="text-2xl font-bold text-slate-800">
+            {data.avgSessionMinutes > 0 ? formatMinutes(data.avgSessionMinutes) : '—'}
+          </p>
+        </StatCard>
+
+        <StatCard icon={<FlameIcon />} label="Top Module">
+          <p className="text-lg font-bold text-slate-800 truncate">
+            {data.mostStudiedModule ?? '—'}
+          </p>
+        </StatCard>
+      </div>
     </div>
   );
 }

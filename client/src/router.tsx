@@ -4,6 +4,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { FlashcardsPage } from './pages/FlashcardsPage';
 
 export const router = createBrowserRouter([
   { path: '/',          element: <Navigate to="/dashboard" replace /> },
@@ -22,6 +23,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <SettingsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/flashcards',
+    element: (
+      <ProtectedRoute>
+        <FlashcardsPage />
       </ProtectedRoute>
     ),
   },

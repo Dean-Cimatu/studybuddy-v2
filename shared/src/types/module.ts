@@ -8,6 +8,8 @@ export interface ModuleDeadline {
   completed: boolean;
 }
 
+export type TopicConfidence = 'not-started' | 'in-progress' | 'confident';
+
 export interface Module {
   _id: string;
   userId: string;
@@ -16,6 +18,7 @@ export interface Module {
   colour: string;
   language: string;
   topics: string[];
+  topicProgress: Record<string, TopicConfidence>;
   weeklyTargetHours: number;
   deadlines: ModuleDeadline[];
   notes: string | null;

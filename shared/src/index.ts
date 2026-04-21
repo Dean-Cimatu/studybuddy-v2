@@ -10,24 +10,32 @@ export type { Task, Priority, TaskStatus } from './types/task';
 
 // ── Flashcard ─────────────────────────────────────────────────────────────────
 
-export interface Flashcard {
-  id: string;
+export interface FlashcardDeck {
+  _id: string;
+  name: string;
+  description: string;
+  moduleId: string | null;
+  cardCount: number;
+  dueCount: number;
+  createdAt: string;
+}
+
+export interface FlashcardCard {
+  _id: string;
+  deckId: string;
   userId: string;
-  deckName: string;
-  question: string;
-  answer: string;
-  difficulty: 1 | 2 | 3 | 4 | 5;
-  lastReviewed: string | null;
-  nextReview: string | null;
-  correctCount: number;
-  incorrectCount: number;
-  aiGenerated: boolean;
+  front: string;
+  back: string;
+  due: string;
+  interval: number;
+  easeFactor: number;
+  repetitions: number;
   createdAt: string;
 }
 
 // ── Module ────────────────────────────────────────────────────────────────────
 
-export type { Module, ModuleDeadline } from './types/module';
+export type { Module, ModuleDeadline, TopicConfidence } from './types/module';
 
 // ── Study Session & Stats ─────────────────────────────────────────────────────
 

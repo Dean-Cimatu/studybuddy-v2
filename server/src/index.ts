@@ -13,6 +13,7 @@ import modulesRouter from './routes/modules';
 import calendarRouter from './routes/calendar';
 import plannerRouter from './routes/planner';
 import groupsRouter from './routes/groups';
+import flashcardsRouter from './routes/flashcards';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/modules', modulesRouter);
 app.use('/api/calendar', calendarRouter);
 app.use('/api/planner', plannerRouter);
 app.use('/api/groups', groupsRouter);
+app.use('/api/flashcards', flashcardsRouter);
 
 connect()
   .then(() => {

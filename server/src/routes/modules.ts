@@ -176,4 +176,29 @@ router.delete('/:id/deadline/:deadlineId', requireAuth, async (req: Request, res
   }
 });
 
+const topicProgressSchema = z.object({
+  topic: z.string().min(1).max(100),
+  confidence: z.enum(['not-started', 'in-progress', 'confident']),
+});
+
+// PATCH /api/modules/:id/topic-progress
+router.patch('/:id/topic-progress', requireAuth, async (req: Request, res: Response) => {
+  const parsed = topicProgressSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' });
+  }
+
+  try {
+    const module = await ModuleModel.findOne({ _id: req.params.id, userId: req.user!._id });
+    if (!module) return res.status(404).json({ error: 'Module not found' });
+
+    module.topicProgress.set(parsed.data.topic, parsed.data.confidence);
+    await module.save();
+    return res.json({ module });
+  } catch (err) {
+    console.error('Topic progress error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
