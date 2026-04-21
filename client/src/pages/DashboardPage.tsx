@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useModules } from '../hooks/useModules';
 import { useDashboardStats } from '../hooks/useStats';
@@ -69,8 +69,7 @@ function UpcomingDeadlines({ modules }: { modules: Module[] }) {
 }
 
 export function DashboardPage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [calendarToast, setCalendarToast] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -98,18 +97,13 @@ export function DashboardPage() {
     }
   }, [searchParams, setSearchParams, activeTab]);
 
-  async function handleLogout() {
-    await logout();
-    void navigate('/login');
-  }
-
   const showOnboarding =
     !modulesLoading &&
     modules.length === 0 &&
     !localStorage.getItem('studybuddy_onboarded');
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
       {calendarToast && (
         <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white text-sm px-4 py-2 rounded-lg shadow-lg">
           Google Calendar connected ✓
@@ -121,7 +115,7 @@ export function DashboardPage() {
       )}
 
       {/* Top bar */}
-      <header className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-10 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3 flex items-center gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-semibold text-slate-800 text-base truncate">
             Hey, {user?.displayName?.split(' ')[0]}!
@@ -144,12 +138,6 @@ export function DashboardPage() {
             </svg>
           </Link>
           <button
-            onClick={() => void handleLogout()}
-            className="hidden md:block text-xs text-slate-500 hover:text-slate-700 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-100"
-          >
-            Sign out
-          </button>
-          <button
             className="md:hidden p-1.5 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100"
             onClick={() => setMobileMenuOpen(v => !v)}
           >
@@ -161,20 +149,14 @@ export function DashboardPage() {
       </header>
 
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 space-y-2">
+        <div className="md:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3">
           <div className="flex items-center justify-center">
             <PomodoroTimer />
           </div>
-          <button
-            onClick={() => void handleLogout()}
-            className="w-full text-sm text-slate-600 py-2 hover:bg-slate-50 rounded-lg"
-          >
-            Sign out
-          </button>
         </div>
       )}
 
-      <div className="bg-white px-4 md:px-6">
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6">
         <TabNav tabs={TABS} activeTab={activeTab} onChange={setTab} />
       </div>
 
@@ -185,14 +167,11 @@ export function DashboardPage() {
               <div className="space-y-6">
                 <StatsPanel />
                 <div className="flex flex-wrap gap-3">
-                  <button onClick={() => setTab('planner')} className="btn-primary px-5 py-2.5">
-                    Plan My Week
-                  </button>
-                  <button onClick={() => setTab('calendar')} className="btn-secondary px-5 py-2.5">
-                    View Calendar
-                  </button>
                   <Link to="/flashcards" className="btn-secondary px-5 py-2.5">
                     Flashcards
+                  </Link>
+                  <Link to="/stats" className="btn-secondary px-5 py-2.5">
+                    View Stats
                   </Link>
                 </div>
                 <WeeklyReport />

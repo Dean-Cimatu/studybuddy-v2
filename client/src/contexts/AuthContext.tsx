@@ -26,6 +26,8 @@ export interface User {
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
+  darkMode: boolean;
+  toggleDarkMode: () => void;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -38,6 +40,14 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('studybuddy_dark') === 'true');
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('studybuddy_dark', String(darkMode));
+  }, [darkMode]);
+
+  function toggleDarkMode() { setDarkMode(d => !d); }
 
   useEffect(() => {
     document.documentElement.dataset.accent = user?.themeAccent ?? 'blue';
@@ -93,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, darkMode, toggleDarkMode, login, register, logout, refreshUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
