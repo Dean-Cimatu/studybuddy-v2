@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useDashboardStats } from '../hooks/useStats';
 
 function formatMinutes(minutes: number): string {
@@ -80,13 +81,8 @@ export function StatsPanel() {
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
       </div>
     );
   }
@@ -107,8 +103,7 @@ export function StatsPanel() {
   const streakHighlight = data.currentStreak >= 7;
 
   return (
-    <div className="space-y-3">
-      {/* Row 1: primary stats */}
+    <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard icon={<ClockIcon />} label="Study Today">
           <p className="text-2xl font-bold text-slate-800">{formatMinutes(data.studyMinutesToday)}</p>
@@ -140,29 +135,10 @@ export function StatsPanel() {
         </StatCard>
       </div>
 
-      {/* Row 2: extended stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<ClockIcon />} label="Sessions This Week">
-          <p className="text-2xl font-bold text-slate-800">{data.sessionsThisWeek}</p>
-        </StatCard>
-
-        <StatCard icon={<TrophyIcon />} label="Longest Session">
-          <p className="text-2xl font-bold text-slate-800">
-            {data.longestSessionMinutes > 0 ? formatMinutes(data.longestSessionMinutes) : '—'}
-          </p>
-        </StatCard>
-
-        <StatCard icon={<ChartIcon />} label="Avg Session">
-          <p className="text-2xl font-bold text-slate-800">
-            {data.avgSessionMinutes > 0 ? formatMinutes(data.avgSessionMinutes) : '—'}
-          </p>
-        </StatCard>
-
-        <StatCard icon={<FlameIcon />} label="Top Module">
-          <p className="text-lg font-bold text-slate-800 truncate">
-            {data.mostStudiedModule ?? '—'}
-          </p>
-        </StatCard>
+      <div className="flex justify-end mt-2">
+        <Link to="/stats" className="text-xs text-slate-400 hover:text-blue-500 transition-colors">
+          View detailed stats →
+        </Link>
       </div>
     </div>
   );

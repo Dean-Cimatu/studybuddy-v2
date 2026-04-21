@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { DashboardStats, StudyHistoryDay } from '@studybuddy/shared';
+import type { DashboardStats, StudyHistoryDay, StudySession } from '@studybuddy/shared';
 
 export interface LogSessionInput {
   startTime: string;
@@ -36,6 +36,14 @@ export function useStudyHistory(days = 30) {
     queryKey: HISTORY_KEY(days),
     queryFn: () =>
       apiFetch<{ history: StudyHistoryDay[] }>(`/api/stats/history?days=${days}`).then(d => d.history),
+  });
+}
+
+export function useRecentSessions(limit = 50) {
+  return useQuery({
+    queryKey: ['study-sessions', limit],
+    queryFn: () =>
+      apiFetch<{ sessions: StudySession[]; total: number }>(`/api/stats/sessions?limit=${limit}`),
   });
 }
 

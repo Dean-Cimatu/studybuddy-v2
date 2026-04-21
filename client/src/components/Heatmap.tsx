@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStudyHistory } from '../hooks/useStats';
+import { useAuth } from '../contexts/AuthContext';
 import type { StudyHistoryDay } from '@studybuddy/shared';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -25,7 +26,7 @@ function formatDuration(minutes: number): string {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
-function buildGrid(rawDays: StudyHistoryDay[]) {
+function buildGrid(rawDays: StudyHistoryDay[], createdAt?: string) {
   const byDate = new Map(rawDays.map(d => [d.date, d.minutes]));
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
@@ -35,14 +36,30 @@ function buildGrid(rawDays: StudyHistoryDay[]) {
   thisWeekSunday.setDate(today.getDate() - dayOfWeek);
   thisWeekSunday.setHours(0, 0, 0, 0);
 
-  const gridStart = new Date(thisWeekSunday);
-  gridStart.setDate(thisWeekSunday.getDate() - 51 * 7);
+  // Determine how far back to go: either account creation date or 52 weeks, whichever is sooner
+  let gridStart: Date;
+  if (createdAt) {
+    const accountDate = new Date(createdAt);
+    const accountSunday = new Date(accountDate);
+    accountSunday.setDate(accountDate.getDate() - accountDate.getDay());
+    accountSunday.setHours(0, 0, 0, 0);
+    const maxStart = new Date(thisWeekSunday);
+    maxStart.setDate(thisWeekSunday.getDate() - 51 * 7);
+    gridStart = accountSunday > maxStart ? accountSunday : maxStart;
+  } else {
+    gridStart = new Date(thisWeekSunday);
+    gridStart.setDate(thisWeekSunday.getDate() - 51 * 7);
+  }
+
+  // Calculate number of weeks to show
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const totalWeeks = Math.max(1, Math.round((thisWeekSunday.getTime() - gridStart.getTime()) / msPerWeek) + 1);
 
   const weeks: Array<Array<{ date: string; minutes: number; isInFuture: boolean }>> = [];
   const monthLabels: Array<{ col: number; month: string }> = [];
   let lastMonth = -1;
 
-  for (let w = 0; w < 52; w++) {
+  for (let w = 0; w < totalWeeks; w++) {
     const week: Array<{ date: string; minutes: number; isInFuture: boolean }> = [];
     for (let d = 0; d < 7; d++) {
       const date = new Date(gridStart);
@@ -86,14 +103,22 @@ function HeatCell({ date, minutes, isInFuture }: { date: string; minutes: number
 }
 
 export function Heatmap() {
-  const { data, isLoading } = useStudyHistory(365);
+  const { user } = useAuth();
+  const createdAt = user?.createdAt;
+
+  // Calculate days to fetch: from account creation (or 365 max)
+  const daysSinceCreation = createdAt
+    ? Math.min(365, Math.max(7, Math.ceil((Date.now() - new Date(createdAt).getTime()) / 86400000) + 7))
+    : 365;
+
+  const { data, isLoading } = useStudyHistory(daysSinceCreation);
 
   if (isLoading) {
     return (
       <div className="card-base p-4">
         <div className="h-4 w-40 skeleton rounded mb-3" />
         <div className="flex" style={{ gap: GAP }}>
-          {Array.from({ length: 52 }).map((_, w) => (
+          {Array.from({ length: Math.min(52, Math.ceil(daysSinceCreation / 7)) }).map((_, w) => (
             <div key={w} className="flex flex-col" style={{ gap: GAP }}>
               {Array.from({ length: 7 }).map((_, d) => (
                 <div key={d} className="skeleton rounded-sm" style={{ width: CELL, height: CELL }} />
@@ -105,7 +130,7 @@ export function Heatmap() {
     );
   }
 
-  const { weeks, monthLabels } = buildGrid(data ?? []);
+  const { weeks, monthLabels } = buildGrid(data ?? [], createdAt);
   const cells = weeks.flat();
   const activeDays = cells.filter(d => d.minutes > 0 && !d.isInFuture).length;
   const totalMinutes = cells.reduce((acc, d) => acc + d.minutes, 0);
@@ -118,12 +143,13 @@ export function Heatmap() {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-700">Study Activity</h3>
         <p className="text-xs text-slate-400">
-          {activeDays} active {activeDays === 1 ? 'day' : 'days'}{totalLabel ? ` · ${totalLabel} total` : ''} in the past year
+          {activeDays} active {activeDays === 1 ? 'day' : 'days'}{totalLabel ? ` · ${totalLabel} total` : ''}
+          {weeks.length < 52 ? ' since you joined' : ' in the past year'}
         </p>
       </div>
 
       <div className="overflow-x-auto">
-        <div style={{ width: 52 * STEP + 28, minWidth: 52 * STEP + 28 }}>
+        <div style={{ width: weeks.length * STEP + 28, minWidth: Math.min(weeks.length, 52) * STEP + 28 }}>
           {/* Month labels */}
           <div className="relative mb-1" style={{ height: 14, marginLeft: 28 }}>
             {monthLabels.map(({ col, month }) => (

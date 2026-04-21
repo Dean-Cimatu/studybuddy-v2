@@ -159,4 +159,31 @@ router.get('/history', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
+const sessionsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  skip: z.coerce.number().int().min(0).default(0),
+});
+
+// GET /api/stats/sessions
+router.get('/sessions', requireAuth, async (req: Request, res: Response) => {
+  const parsed = sessionsQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid query' });
+  }
+
+  const { limit, skip } = parsed.data;
+  const userId = req.user!._id;
+
+  try {
+    const [sessions, total] = await Promise.all([
+      StudySessionModel.find({ userId }).sort({ startTime: -1 }).skip(skip).limit(limit),
+      StudySessionModel.countDocuments({ userId }),
+    ]);
+    return res.json({ sessions, total });
+  } catch (err) {
+    console.error('Sessions list error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
