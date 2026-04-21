@@ -54,7 +54,7 @@ function SessionBlock({ session, active, onActivate, onClose, onRemove, onMove }
     <div
       className="absolute left-0.5 right-0.5 rounded-md px-1.5 py-1 overflow-hidden cursor-pointer select-none z-10 shadow-sm"
       style={{ top, height, backgroundColor: session.moduleColour }}
-      onClick={e => { e.stopPropagation(); active ? onClose() : onActivate(); }}
+      onClick={e => { e.stopPropagation(); if (active) onClose(); else onActivate(); }}
     >
       <p className="text-[10px] text-white/80 leading-tight">{fmt12(session.startHour)}</p>
       <p className="text-xs font-semibold text-white leading-tight truncate">{session.moduleName}</p>

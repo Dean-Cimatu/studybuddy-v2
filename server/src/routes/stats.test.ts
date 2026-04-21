@@ -79,7 +79,7 @@ describe('POST /api/stats/session', () => {
 
   it('rejects missing startTime', async () => {
     const cookie = await registerAndGetCookie();
-    const { startTime: _omitted, ...noStart } = validSession;
+    const { startTime: _startTime, ...noStart } = validSession;
     const res = await request(app)
       .post('/api/stats/session')
       .set('Cookie', cookie)

@@ -35,7 +35,6 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const createModule = useCreateModule();
 
   const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
 
   // Step 1 state
   const [discipline, setDiscipline] = useState(user?.discipline ?? '');
@@ -51,7 +50,6 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const [modulesAdded, setModulesAdded] = useState(false);
 
   function go(nextStep: number) {
-    setDirection(nextStep > step ? 'forward' : 'back');
     setStep(nextStep);
   }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useModules } from '../hooks/useModules';
@@ -110,14 +110,16 @@ export function DashboardPage() {
     setSearchParams({ tab: id }, { replace: true });
   }
 
+  const didHandleCalendarParam = useRef(false);
   useEffect(() => {
-    if (searchParams.get('calendar') === 'connected') {
+    if (!didHandleCalendarParam.current && searchParams.get('calendar') === 'connected') {
+      didHandleCalendarParam.current = true;
       setCalendarToast(true);
       setSearchParams({ tab: activeTab }, { replace: true });
       const t = setTimeout(() => setCalendarToast(false), 3500);
       return () => clearTimeout(t);
     }
-  }, []);
+  }, [searchParams, setSearchParams, activeTab]);
 
   async function handleLogout() {
     await logout();
