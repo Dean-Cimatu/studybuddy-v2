@@ -7,9 +7,16 @@ export interface Task {
   title: string;
   description?: string;
   dueDate?: string;
-  estimatedMinutes?: number;
+  estimatedMinutes: number | null;
   priority: Priority;
   status: TaskStatus;
+  parentId: string | null;
+  isGoal: boolean;
+  moduleId: string | null;
+  moduleTag: string | null;
+  order: number;
   createdAt: string;
   updatedAt: string;
+  subtaskCount?: number;
+  completedSubtaskCount?: number;
 }

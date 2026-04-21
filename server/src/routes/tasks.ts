@@ -19,12 +19,40 @@ const updateSchema = createSchema.partial();
 
 // GET /api/tasks
 router.get('/', async (req: Request, res: Response) => {
-  const filter: Record<string, unknown> = { userId: req.user!._id.toString() };
+  const userId = req.user!._id.toString();
+  const filter: Record<string, unknown> = { userId };
   if (req.query['status']) filter['status'] = req.query['status'];
 
   try {
-    const tasks = await TaskModel.find(filter).sort({ createdAt: -1 });
-    return res.json({ tasks: tasks.map(t => t.toJSON()) });
+    const tasks = await TaskModel.find(filter).sort({ order: 1, createdAt: -1 });
+    const goalIds = tasks.filter(t => t.isGoal).map(t => t._id);
+
+    let subtaskCounts: Map<string, { total: number; completed: number }> = new Map();
+    if (goalIds.length > 0) {
+      const counts = await TaskModel.aggregate([
+        { $match: { userId, parentId: { $in: goalIds } } },
+        {
+          $group: {
+            _id: '$parentId',
+            total: { $sum: 1 },
+            completed: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } },
+          },
+        },
+      ]);
+      subtaskCounts = new Map(counts.map(c => [c._id.toString(), { total: c.total, completed: c.completed }]));
+    }
+
+    const result = tasks.map(t => {
+      const json = t.toJSON() as Record<string, unknown>;
+      if (t.isGoal) {
+        const counts = subtaskCounts.get(t._id.toString()) ?? { total: 0, completed: 0 };
+        json['subtaskCount'] = counts.total;
+        json['completedSubtaskCount'] = counts.completed;
+      }
+      return json;
+    });
+
+    return res.json({ tasks: result });
   } catch (err) {
     console.error('List tasks error:', err);
     return res.status(500).json({ error: 'Internal server error' });
