@@ -7,6 +7,11 @@ export interface User {
   googleCalendarConnected?: boolean;
   studyGoalHours?: number;
   discipline?: string;
+  university?: string;
+  yearOfStudy?: string;
+  bio?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
   preferredSessionLength?: number;
   preferredStudyTime?: string;
   themeAccent?: string;
@@ -33,6 +38,10 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    document.documentElement.dataset.accent = user?.themeAccent ?? 'blue';
+  }, [user?.themeAccent]);
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })

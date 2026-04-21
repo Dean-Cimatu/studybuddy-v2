@@ -53,6 +53,11 @@ export function SettingsPage() {
 
   const [displayName, setDisplayName] = useState(user?.displayName ?? '');
   const [discipline, setDiscipline] = useState(user?.discipline ?? '');
+  const [university, setUniversity] = useState(user?.university ?? '');
+  const [yearOfStudy, setYearOfStudy] = useState(user?.yearOfStudy ?? '');
+  const [bio, setBio] = useState(user?.bio ?? '');
+  const [linkedinUrl, setLinkedinUrl] = useState(user?.linkedinUrl ?? '');
+  const [githubUrl, setGithubUrl] = useState(user?.githubUrl ?? '');
   const [goalHours, setGoalHours] = useState(user?.studyGoalHours ?? 15);
   const [sessionLength, setSessionLength] = useState<25 | 50 | 90>(
     (user?.preferredSessionLength as 25 | 50 | 90) ?? 25
@@ -126,18 +131,92 @@ export function SettingsPage() {
                 value={displayName}
                 onChange={e => {
                   setDisplayName(e.target.value);
-                  scheduleSave({ name: e.target.value, discipline });
+                  scheduleSave({ name: e.target.value });
                 }}
               />
               <input
-                className="input w-full"
-                placeholder="What do you study?"
-                value={discipline}
-                onChange={e => {
-                  setDiscipline(e.target.value);
-                  scheduleSave({ name: displayName, discipline: e.target.value });
-                }}
+                className="input w-full opacity-50 cursor-not-allowed"
+                placeholder="Email"
+                value={user?.email ?? ''}
+                disabled
               />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Subject / Discipline</label>
+                <input
+                  className="input w-full"
+                  placeholder="e.g. Computer Science"
+                  value={discipline}
+                  onChange={e => { setDiscipline(e.target.value); scheduleSave({ discipline: e.target.value }); }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">University / Institution</label>
+                <input
+                  className="input w-full"
+                  placeholder="e.g. Middlesex University"
+                  value={university}
+                  onChange={e => { setUniversity(e.target.value); scheduleSave({ university: e.target.value }); }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Year of Study</label>
+              <div className="flex flex-wrap gap-2">
+                {['1st', '2nd', '3rd', '4th', 'Masters', 'PhD', 'Other'].map(y => (
+                  <button
+                    key={y}
+                    type="button"
+                    onClick={() => { setYearOfStudy(y); scheduleSave({ yearOfStudy: y }); }}
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                      yearOfStudy === y
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    {y}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Bio</label>
+              <textarea
+                className="input w-full resize-none text-sm"
+                placeholder="A short bio about yourself…"
+                rows={2}
+                maxLength={300}
+                value={bio}
+                onChange={e => { setBio(e.target.value); scheduleSave({ bio: e.target.value }); }}
+              />
+              <p className="text-xs text-slate-400 text-right mt-0.5">{bio.length}/300</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">LinkedIn URL</label>
+                <input
+                  className="input w-full"
+                  placeholder="linkedin.com/in/yourname"
+                  value={linkedinUrl}
+                  onChange={e => { setLinkedinUrl(e.target.value); scheduleSave({ linkedinUrl: e.target.value }); }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">GitHub URL</label>
+                <input
+                  className="input w-full"
+                  placeholder="github.com/yourname"
+                  value={githubUrl}
+                  onChange={e => { setGithubUrl(e.target.value); scheduleSave({ githubUrl: e.target.value }); }}
+                />
+              </div>
             </div>
           </div>
         </section>

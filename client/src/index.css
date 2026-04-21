@@ -39,6 +39,17 @@
   .skeleton { @apply bg-slate-100 rounded-lg animate-pulse; }
 }
 
+/* ── Accent colour overrides ───────────────────────────────────────── */
+[data-accent="green"] .btn-primary  { background-color: #10B981; }
+[data-accent="green"] .btn-primary:not(:disabled):hover { background-color: #059669; }
+[data-accent="green"] .btn-secondary { color: #059669; }
+[data-accent="purple"] .btn-primary { background-color: #8B5CF6; }
+[data-accent="purple"] .btn-primary:not(:disabled):hover { background-color: #7C3AED; }
+[data-accent="purple"] .btn-secondary { color: #7C3AED; }
+[data-accent="amber"] .btn-primary  { background-color: #F59E0B; }
+[data-accent="amber"] .btn-primary:not(:disabled):hover  { background-color: #D97706; }
+[data-accent="amber"] .btn-secondary { color: #D97706; }
+
 @layer utilities {
   .animate-toast-in {
     animation: toast-in 0.2s ease-out forwards;

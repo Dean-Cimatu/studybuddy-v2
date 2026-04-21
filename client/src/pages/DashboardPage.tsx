@@ -262,7 +262,6 @@ export function DashboardPage() {
                 </div>
                 <Heatmap />
                 <UpcomingDeadlines modules={modules} />
-                <CompactModuleList modules={modules} onAdd={() => setTab('modules')} />
               </div>
             )}
 
