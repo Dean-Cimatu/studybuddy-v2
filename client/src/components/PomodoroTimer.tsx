@@ -61,6 +61,19 @@ export function PomodoroTimer() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // Start session via custom event (from StudyPlanView or Quick Actions)
+  useEffect(() => {
+    function handleStartSession(e: Event) {
+      const detail = (e as CustomEvent<{ moduleTag?: string; moduleName?: string }>).detail ?? {};
+      if (!timer.isRunning) {
+        timer.startWork(detail.moduleTag, detail.moduleName);
+        sessionStartRef.current = new Date().toISOString();
+      }
+    }
+    window.addEventListener('studybuddy:start-session', handleStartSession);
+    return () => window.removeEventListener('studybuddy:start-session', handleStartSession);
+  }, [timer]);
+
   function handlePlay() {
     if (modules.length === 0) {
       timer.startWork();

@@ -1,10 +1,21 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   displayName: string;
   googleCalendarConnected?: boolean;
+  studyGoalHours?: number;
+  discipline?: string;
+  preferredSessionLength?: number;
+  preferredStudyTime?: string;
+  themeAccent?: string;
+  streak?: number;
+  longestStreak?: number;
+  totalStudyMinutes?: number;
+  achievements?: string[];
+  streakMilestonesAwarded?: number[];
+  createdAt?: string;
 }
 
 interface AuthContextValue {
@@ -14,6 +25,7 @@ interface AuthContextValue {
   register: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (patch: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -67,8 +79,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  function updateUser(patch: Partial<User>): void {
+    setUser(prev => prev ? { ...prev, ...patch } : prev);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
