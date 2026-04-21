@@ -62,6 +62,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 export function SettingsPage() {
   const { user, updateUser, darkMode, toggleDarkMode, logout } = useAuth();
   const navigate = useNavigate();
+  const [customHoursMode, setCustomHoursMode] = useState(() => (user?.studyGoalHours ?? 15) > 40);
 
   const [displayName, setDisplayName]   = useState(user?.displayName ?? '');
   const [discipline, setDiscipline]     = useState(user?.discipline ?? '');
@@ -241,18 +242,47 @@ export function SettingsPage() {
           <SectionTitle>Study Preferences</SectionTitle>
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-                Weekly study goal: <span className="text-blue-500 font-semibold">{goalHours}h</span>
-              </label>
-              <input
-                type="range"
-                min={5}
-                max={40}
-                value={goalHours}
-                onChange={e => { const val = Number(e.target.value); setGoalHours(val); scheduleSave({ studyGoalHours: val }); }}
-                className="w-full accent-blue-500"
-              />
-              <div className="flex justify-between text-xs text-slate-400 mt-1"><span>5h</span><span>40h</span></div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Weekly study goal: <span className="text-blue-500 font-semibold">{goalHours}h</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setCustomHoursMode(m => !m)}
+                  className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
+                >
+                  {customHoursMode ? 'Use slider' : 'Custom'}
+                </button>
+              </div>
+              {customHoursMode ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={5}
+                    max={168}
+                    value={goalHours}
+                    onChange={e => {
+                      const val = Math.min(168, Math.max(5, Number(e.target.value)));
+                      setGoalHours(val);
+                      scheduleSave({ studyGoalHours: val });
+                    }}
+                    className={`${fieldCls} w-24`}
+                  />
+                  <span className="text-sm text-slate-500 dark:text-slate-400">hours / week</span>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="range"
+                    min={5}
+                    max={40}
+                    value={Math.min(goalHours, 40)}
+                    onChange={e => { const val = Number(e.target.value); setGoalHours(val); scheduleSave({ studyGoalHours: val }); }}
+                    className="w-full accent-blue-500"
+                  />
+                  <div className="flex justify-between text-xs text-slate-400 mt-1"><span>5h</span><span>40h</span></div>
+                </>
+              )}
             </div>
 
             <div>
@@ -359,6 +389,16 @@ export function SettingsPage() {
                 <p className="text-xl font-bold text-slate-800 dark:text-slate-100">{user?.streak ?? 0}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Current streak</p>
               </div>
+            </div>
+
+            <div className="pt-2">
+              <Link
+                to="/stats"
+                className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400 hover:text-blue-500 transition-colors py-1"
+              >
+                <span>Detailed study stats</span>
+                <span>→</span>
+              </Link>
             </div>
 
             <div className="pt-2">

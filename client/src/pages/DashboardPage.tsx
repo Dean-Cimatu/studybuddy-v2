@@ -168,28 +168,17 @@ export function DashboardPage() {
                 <StatsPanel />
 
                 {/* Quick actions */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Planner',  icon: '🗓',  action: () => setTab('planner') },
-                    { label: 'Calendar', icon: '📅',  action: () => setTab('calendar') },
-                    { label: 'Stats',    icon: '📊',  href: '/stats' },
-                  ].map(item => item.href ? (
-                    <Link
-                      key={item.label}
-                      to={item.href}
-                      className="card-base p-3 flex flex-col items-center gap-1.5 hover:shadow-md transition-shadow cursor-pointer select-none"
-                    >
-                      <span className="text-2xl">{item.icon}</span>
-                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{item.label}</span>
-                    </Link>
-                  ) : (
+                    { label: 'Planner',  action: () => setTab('planner') },
+                    { label: 'Calendar', action: () => setTab('calendar') },
+                  ].map(item => (
                     <button
                       key={item.label}
                       onClick={item.action}
-                      className="card-base p-3 flex flex-col items-center gap-1.5 hover:shadow-md transition-shadow cursor-pointer select-none w-full"
+                      className="card-base py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-300 hover:shadow-md transition-shadow cursor-pointer select-none w-full"
                     >
-                      <span className="text-2xl">{item.icon}</span>
-                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{item.label}</span>
+                      {item.label}
                     </button>
                   ))}
                 </div>
