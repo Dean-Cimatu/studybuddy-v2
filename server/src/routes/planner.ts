@@ -4,7 +4,7 @@ import { requireAuth } from '../middleware/requireAuth';
 import { StudyPlanModel } from '../models/StudyPlan';
 import { generateWeeklyPlan, getWeekStartDate } from '../services/studyPlanner';
 import { updateEvent, deleteEvent } from '../services/googleCalendar';
-import { postFeedItem } from '../utils/feed';
+import { upsertWeeklyFeedItem } from '../utils/feed';
 import { awardAchievement } from '../utils/achievements';
 
 const router = Router();
@@ -15,7 +15,8 @@ router.post('/generate', async (req: Request, res: Response) => {
   const { pushToGoogleCalendar = false } = req.body as { pushToGoogleCalendar?: boolean };
   try {
     const plan = await generateWeeklyPlan(req.user!._id.toString(), pushToGoogleCalendar);
-    await postFeedItem(req.user!._id.toString(), req.user!.displayName, 'plan-generated', {
+    const weekStartDate = getWeekStartDate();
+    await upsertWeeklyFeedItem(req.user!._id.toString(), req.user!.displayName, 'plan-generated', weekStartDate, {
       totalMinutes: plan.totalPlannedMinutes,
       sessionCount: plan.sessions.length,
     }).catch(() => {});
