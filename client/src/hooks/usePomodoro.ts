@@ -135,7 +135,6 @@ export function usePomodoro(logSession?: (durationMinutes: number, moduleTag: st
     } else {
       setTimeRemaining(saved.isBreak ? breakDuration(saved.sessionCount) : WORK_SECONDS);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Tick
