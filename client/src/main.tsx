@@ -13,7 +13,17 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
-      retry: 1,
+      retry: (failureCount, error) => {
+        if ((error as Error)?.message === 'Not authenticated') return false;
+        return failureCount < 1;
+      },
+    },
+    mutations: {
+      onError: (error) => {
+        if ((error as Error)?.message === 'Not authenticated') {
+          window.location.href = '/login';
+        }
+      },
     },
   },
 });

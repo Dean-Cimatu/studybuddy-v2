@@ -138,7 +138,7 @@ function MovePicker({ session, onSave, onCancel }: MovePickerProps) {
               onChange={e => setHour(Number(e.target.value))}
               className="w-full text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-400"
             >
-              {Array.from({ length: GRID_END - GRID_START }, (_, i) => GRID_START + i).map(h => (
+              {Array.from({ length: 14 }, (_, i) => 8 + i).map(h => (
                 <option key={h} value={h}>{fmt12(h)}</option>
               ))}
             </select>
