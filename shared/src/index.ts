@@ -33,6 +33,10 @@ export type { Module, ModuleDeadline } from './types/module';
 
 export type { StudySession, DashboardStats, StudyHistoryDay } from './types/stats';
 
+// ── Planner ───────────────────────────────────────────────────────────────────
+
+export type { StudyPlan, StudyPlanSession } from './types/planner';
+
 // ── AI / Chat ─────────────────────────────────────────────────────────────────
 
 export type MessageRole = 'user' | 'assistant';

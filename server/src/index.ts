@@ -11,6 +11,7 @@ import aiRouter from './routes/ai';
 import statsRouter from './routes/stats';
 import modulesRouter from './routes/modules';
 import calendarRouter from './routes/calendar';
+import plannerRouter from './routes/planner';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/api/ai', aiRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/modules', modulesRouter);
 app.use('/api/calendar', calendarRouter);
+app.use('/api/planner', plannerRouter);
 
 connect()
   .then(() => {
