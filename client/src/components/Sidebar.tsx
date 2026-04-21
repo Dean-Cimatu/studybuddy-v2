@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, FormEvent, KeyboardEvent } from 'react';
 import { useChat } from '../hooks/useChat';
-import { ResourceCard } from './ResourceCard';
 import type { ChatMessage } from '../hooks/useChat';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -90,17 +89,14 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
     );
   }
 
-  // wellbeing
+  // chat
   return (
     <div className="flex items-end gap-1.5">
       <span className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center shrink-0">
         <BotIcon className="w-3 h-3 text-gray-300" />
       </span>
-      <div className="max-w-[78%]">
-        <div className="bg-gray-800 text-gray-200 text-sm px-3 py-2.5 rounded-2xl rounded-bl-sm leading-relaxed">
-          {msg.content}
-        </div>
-        {msg.resourceCategory && <ResourceCard category={msg.resourceCategory} />}
+      <div className="max-w-[78%] bg-gray-800 text-gray-200 text-sm px-3 py-2.5 rounded-2xl rounded-bl-sm leading-relaxed">
+        {msg.content}
       </div>
     </div>
   );

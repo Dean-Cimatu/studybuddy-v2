@@ -11,12 +11,12 @@ import type { GeneratedTask } from '../ai/claude';
 // ── Mock claude module — no real API calls in tests ───────────────────────────
 vi.mock('../ai/claude', () => ({
   generateTasksFromDescription: vi.fn(),
-  chatWellbeing: vi.fn(),
+  unifiedChat: vi.fn(),
 }));
 
-import { generateTasksFromDescription, chatWellbeing } from '../ai/claude';
+import { generateTasksFromDescription, unifiedChat } from '../ai/claude';
 const mockGenerate = vi.mocked(generateTasksFromDescription);
-const mockChat = vi.mocked(chatWellbeing);
+const mockUnified = vi.mocked(unifiedChat);
 
 // ── Test app setup ────────────────────────────────────────────────────────────
 let mongoServer: MongoMemoryServer;
@@ -79,7 +79,6 @@ describe('POST /api/ai/generate-tasks — response parsing', () => {
     expect(res.body.tasks[0].priority).toBe('high');
     expect(res.body.tasks[0].estimatedMinutes).toBe(45);
     expect(res.body.tasks[1].title).toBe('Do practice problems');
-    // Tasks belong to the requesting user
     expect(res.body.tasks[0].userId).toBeDefined();
     expect(mockGenerate).toHaveBeenCalledWith(
       'Prepare for my calculus exam on integrals',
@@ -99,46 +98,44 @@ describe('POST /api/ai/generate-tasks — response parsing', () => {
   });
 });
 
-describe('POST /api/ai/chat — response parsing', () => {
-  it('returns reply and strips resource tag', async () => {
+describe('POST /api/ai/message — unified chat', () => {
+  it('returns task list when AI detects task generation intent', async () => {
     const cookie = await registerAndGetCookie('alice@test.com');
 
-    mockChat.mockResolvedValueOnce({
-      reply: "It sounds like you're feeling overwhelmed. Try the 4-7-8 breathing technique to reset. You've got this.",
-      resourceCategory: 'stress',
-    });
+    const mockTasks: GeneratedTask[] = [
+      { title: 'Read notes', priority: 'high', status: 'todo' },
+    ];
+    mockUnified.mockResolvedValueOnce({ mode: 'tasks', tasks: mockTasks });
 
     const res = await request(app)
-      .post('/api/ai/chat')
+      .post('/api/ai/message')
       .set('Cookie', cookie)
-      .send({ messages: [{ role: 'user', content: "I'm really stressed about exams" }] });
+      .send({ messages: [{ role: 'user', content: 'I need to study for my exam' }] });
 
-    expect(res.status).toBe(200);
-    expect(res.body.reply).toContain("overwhelmed");
-    expect(res.body.resourceCategory).toBe('stress');
-    // Resource tag must be stripped from reply
-    expect(res.body.reply).not.toMatch(/\[RESOURCE:/);
+    expect(res.status).toBe(201);
+    expect(res.body.mode).toBe('tasks');
+    expect(res.body.tasks).toHaveLength(1);
   });
 
-  it('returns reply without resourceCategory when none present', async () => {
+  it('returns chat reply for general questions', async () => {
     const cookie = await registerAndGetCookie('alice@test.com');
 
-    mockChat.mockResolvedValueOnce({ reply: 'Keep going, you can do it.' });
+    mockUnified.mockResolvedValueOnce({ mode: 'chat', reply: 'Try the Pomodoro technique!' });
 
     const res = await request(app)
-      .post('/api/ai/chat')
+      .post('/api/ai/message')
       .set('Cookie', cookie)
-      .send({ messages: [{ role: 'user', content: 'Hello' }] });
+      .send({ messages: [{ role: 'user', content: 'How do I study better?' }] });
 
     expect(res.status).toBe(200);
-    expect(res.body.reply).toBe('Keep going, you can do it.');
-    expect(res.body.resourceCategory).toBeUndefined();
+    expect(res.body.mode).toBe('chat');
+    expect(res.body.reply).toContain('Pomodoro');
   });
 
   it('returns 400 when messages array is empty', async () => {
     const cookie = await registerAndGetCookie('alice@test.com');
     const res = await request(app)
-      .post('/api/ai/chat')
+      .post('/api/ai/message')
       .set('Cookie', cookie)
       .send({ messages: [] });
     expect(res.status).toBe(400);
@@ -151,20 +148,18 @@ describe(`rate limiting — kicks in on request ${RATE_LIMIT + 1}`, () => {
   it(`allows ${RATE_LIMIT} requests then returns 429`, async () => {
     const cookie = await registerAndGetCookie('ratelimit@test.com');
 
-    mockChat.mockResolvedValue({ reply: 'OK', resourceCategory: 'general' });
+    mockUnified.mockResolvedValue({ mode: 'chat', reply: 'OK' });
 
-    // First RATE_LIMIT requests should succeed
     for (let i = 0; i < RATE_LIMIT; i++) {
       const res = await request(app)
-        .post('/api/ai/chat')
+        .post('/api/ai/message')
         .set('Cookie', cookie)
         .send({ messages: [{ role: 'user', content: `message ${i}` }] });
       expect(res.status).toBe(200);
     }
 
-    // Next request must be rate limited
     const limited = await request(app)
-      .post('/api/ai/chat')
+      .post('/api/ai/message')
       .set('Cookie', cookie)
       .send({ messages: [{ role: 'user', content: 'one too many' }] });
 
@@ -176,24 +171,22 @@ describe(`rate limiting — kicks in on request ${RATE_LIMIT + 1}`, () => {
     const cookieA = await registerAndGetCookie('userA@test.com');
     const cookieB = await registerAndGetCookie('userB@test.com');
 
-    mockChat.mockResolvedValue({ reply: 'OK' });
+    mockUnified.mockResolvedValue({ mode: 'chat', reply: 'OK' });
 
-    // Exhaust userA's limit
     for (let i = 0; i < RATE_LIMIT; i++) {
       await request(app)
-        .post('/api/ai/chat')
+        .post('/api/ai/message')
         .set('Cookie', cookieA)
         .send({ messages: [{ role: 'user', content: `msg ${i}` }] });
     }
     const blockedA = await request(app)
-      .post('/api/ai/chat')
+      .post('/api/ai/message')
       .set('Cookie', cookieA)
       .send({ messages: [{ role: 'user', content: 'extra' }] });
     expect(blockedA.status).toBe(429);
 
-    // userB should still be able to make requests
     const okB = await request(app)
-      .post('/api/ai/chat')
+      .post('/api/ai/message')
       .set('Cookie', cookieB)
       .send({ messages: [{ role: 'user', content: 'hello' }] });
     expect(okB.status).toBe(200);
@@ -218,12 +211,12 @@ describe('API key security — ANTHROPIC_API_KEY never appears in any response',
     expect(JSON.stringify(res.headers)).not.toContain(SENTINEL);
   });
 
-  it('chat response does not contain the API key', async () => {
+  it('message response does not contain the API key', async () => {
     const cookie = await registerAndGetCookie('security2@test.com');
-    mockChat.mockResolvedValueOnce({ reply: 'Keep going!', resourceCategory: 'motivation' });
+    mockUnified.mockResolvedValueOnce({ mode: 'chat', reply: 'Keep going!' });
 
     const res = await request(app)
-      .post('/api/ai/chat')
+      .post('/api/ai/message')
       .set('Cookie', cookie)
       .send({ messages: [{ role: 'user', content: 'help' }] });
 

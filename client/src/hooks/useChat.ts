@@ -12,12 +12,11 @@ export interface UserMessage {
   timestamp: number;
 }
 
-export interface WellbeingMessage {
+export interface AssistantMessage {
   id: string;
   role: 'assistant';
-  mode: 'wellbeing';
+  mode: 'chat';
   content: string;
-  resourceCategory?: string;
   timestamp: number;
 }
 
@@ -37,11 +36,11 @@ export interface ErrorMessage {
   timestamp: number;
 }
 
-export type ChatMessage = UserMessage | WellbeingMessage | TaskGenMessage | ErrorMessage;
+export type ChatMessage = UserMessage | AssistantMessage | TaskGenMessage | ErrorMessage;
 
 type APIResponse =
   | { mode: 'tasks'; tasks: Task[] }
-  | { mode: 'wellbeing'; reply: string; resourceCategory?: string }
+  | { mode: 'chat'; reply: string }
   | { error: string };
 
 // ── localStorage helpers ──────────────────────────────────────────────────────
@@ -73,13 +72,14 @@ function uid() {
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-// Build the messages array for the API (only user + wellbeing assistant turns)
 function toApiMessages(msgs: ChatMessage[]) {
   return msgs
-    .filter((m): m is UserMessage | WellbeingMessage => m.role === 'user' || (m.role === 'assistant' && m.mode === 'wellbeing'))
+    .filter((m): m is UserMessage | AssistantMessage =>
+      m.role === 'user' || (m.role === 'assistant' && m.mode === 'chat')
+    )
     .map(m => ({
       role: m.role as 'user' | 'assistant',
-      content: m.role === 'user' ? m.content : (m as WellbeingMessage).content,
+      content: m.role === 'user' ? m.content : (m as AssistantMessage).content,
     }));
 }
 
@@ -93,12 +93,10 @@ export function useChat() {
   );
   const [sending, setSending] = useState(false);
 
-  // Sync to localStorage whenever messages change
   useEffect(() => {
     if (userId) saveMessages(userId, messages);
   }, [messages, userId]);
 
-  // Reload messages when user changes
   useEffect(() => {
     if (userId) setMessages(loadMessages(userId));
   }, [userId]);
@@ -153,18 +151,16 @@ export function useChat() {
             timestamp: Date.now(),
           };
           setMessages(prev => [...prev, taskMsg]);
-          // Refetch task list so the new tasks appear immediately
           void queryClient.invalidateQueries({ queryKey: ['tasks'] });
         } else {
-          const wellbeingMsg: WellbeingMessage = {
+          const chatMsg: AssistantMessage = {
             id: uid(),
             role: 'assistant',
-            mode: 'wellbeing',
+            mode: 'chat',
             content: data.reply,
-            resourceCategory: data.resourceCategory,
             timestamp: Date.now(),
           };
-          setMessages(prev => [...prev, wellbeingMsg]);
+          setMessages(prev => [...prev, chatMsg]);
         }
       } catch {
         const errMsg: ErrorMessage = {
@@ -191,7 +187,7 @@ export function useChat() {
   const lastMessagePreview: string = (() => {
     if (!lastMessage) return '';
     if (lastMessage.role === 'user') return lastMessage.content;
-    if (lastMessage.mode === 'wellbeing') return lastMessage.content;
+    if (lastMessage.mode === 'chat') return lastMessage.content;
     if (lastMessage.mode === 'tasks') return `Created ${lastMessage.taskCount} task${lastMessage.taskCount !== 1 ? 's' : ''}`;
     if (lastMessage.mode === 'error') return lastMessage.content;
     return '';

@@ -33,23 +33,15 @@ Example:
 [{"title":"Read Chapter 3","description":"Sections 3.1–3.4","priority":"high","estimatedMinutes":45}]
 \`\`\``;
 
-const WELLBEING_SYSTEM = `You are a warm, supportive wellbeing assistant for students.
-Respond in 2–3 sentences — empathetic, practical, never preachy.
-At the very end append exactly one resource tag: [RESOURCE:category]
-Categories: stress, focus, sleep, motivation, burnout, general
-Example reply: "Feeling stretched thin is completely normal around exam time. Try a short walk or the 4-7-8 breathing technique to reset. You're doing better than you think. [RESOURCE:stress]"`;
-
-const UNIFIED_SYSTEM = `You are StudyBuddy AI for Middlesex University students. Detect intent from the conversation.
+const UNIFIED_SYSTEM = `You are StudyBuddy AI, a study productivity assistant. Detect intent from the conversation.
 
 TASK GENERATION — user wants to plan work, create a study schedule, or describes an assignment/exam/deadline:
 → Respond with ONLY a JSON array inside \`\`\`json\`\`\` fences. No other text.
   Each task: title (string, required), description? (string), priority ("low"|"med"|"high"), estimatedMinutes? (number)
   Aim for 3–6 specific, actionable tasks.
 
-WELLBEING — user expresses feelings, stress, anxiety, overwhelm, loneliness, or needs emotional support:
-→ Respond warmly in 2–3 sentences (empathetic, practical, never preachy).
-  At the very end append exactly: [RESOURCE:category]
-  Categories: stress, focus, sleep, motivation, burnout, general
+GENERAL CHAT — any other question, conversation, or request:
+→ Respond helpfully and concisely in plain text. No JSON.
 
 Choose exactly one mode. Never mix JSON with prose.`;
 
@@ -82,7 +74,7 @@ export async function generateTasksFromDescription(
 
 export type UnifiedResponse =
   | { mode: 'tasks'; tasks: GeneratedTask[] }
-  | { mode: 'wellbeing'; reply: string; resourceCategory?: string };
+  | { mode: 'chat'; reply: string };
 
 export async function unifiedChat(
   messages: { role: 'user' | 'assistant'; content: string }[]
@@ -106,10 +98,7 @@ export async function unifiedChat(
     return { mode: 'tasks', tasks: parsed.map(item => generatedTaskSchema.parse(item)) };
   }
 
-  const resourceMatch = raw.match(/\[RESOURCE:(\w+)\]/);
-  const resourceCategory = resourceMatch?.[1];
-  const reply = raw.replace(/\s*\[RESOURCE:\w+\]\s*$/, '').trim();
-  return { mode: 'wellbeing', reply, resourceCategory };
+  return { mode: 'chat', reply: raw.trim() };
 }
 
 // ── Task breakdown ────────────────────────────────────────────────────────────
@@ -158,24 +147,3 @@ export async function breakdownGoal(opts: {
   }
 }
 
-export async function chatWellbeing(
-  messages: { role: 'user' | 'assistant'; content: string }[]
-): Promise<{ reply: string; resourceCategory?: string }> {
-  const message = await getClient().messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 512,
-    system: WELLBEING_SYSTEM,
-    messages,
-  });
-
-  const raw = message.content
-    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-    .map(b => b.text)
-    .join('');
-
-  const resourceMatch = raw.match(/\[RESOURCE:(\w+)\]/);
-  const resourceCategory = resourceMatch?.[1];
-  const reply = raw.replace(/\s*\[RESOURCE:\w+\]\s*$/, '').trim();
-
-  return { reply, resourceCategory };
-}

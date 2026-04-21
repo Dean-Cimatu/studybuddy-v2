@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { GoogleCalendarConnect } from '../components/GoogleCalendarConnect';
 import { AchievementBadge } from '../components/AchievementBadge';
-import { UNIVERSITY_RESOURCES } from '../constants/universityResources';
 import { ACHIEVEMENTS } from '@studybuddy/shared';
 
 const ACCENT_COLOURS = [
@@ -252,39 +251,7 @@ export function SettingsPage() {
           </div>
         </section>
 
-        {/* Section 5: Support */}
-        <section className="card-base p-6 mb-6">
-          <h2 className="text-base font-semibold text-slate-700 mb-4">University Resources</h2>
-          <div className="grid grid-cols-1 gap-2">
-            {Object.entries(UNIVERSITY_RESOURCES).map(([key, cat]) => (
-              <div key={key} className="border border-slate-200 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span>{cat.icon}</span>
-                  <span className="text-sm font-medium text-slate-700">{cat.label}</span>
-                </div>
-                <div className="space-y-1">
-                  {cat.items.slice(0, 2).map((item, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <span className="text-xs text-slate-500 truncate">{item.name}</span>
-                      {item.link && (
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-500 hover:text-blue-700 ml-2 shrink-0"
-                        >
-                          Visit →
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 6: Account */}
+        {/* Section 5: Account */}
         <section className="card-base p-6">
           <h2 className="text-base font-semibold text-slate-700 mb-4">Account</h2>
           <div className="space-y-4">

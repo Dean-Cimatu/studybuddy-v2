@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/requireAuth';
-import { generateTasksFromDescription, chatWellbeing, unifiedChat } from '../ai/claude';
+import { generateTasksFromDescription, unifiedChat } from '../ai/claude';
 import { TaskModel } from '../models/Task';
 
 const descriptionSchema = z.object({
@@ -76,22 +76,6 @@ export function createAiRouter(maxRequestsPerHour?: number) {
     } catch (err) {
       console.error('Unified chat error:', err);
       return res.status(500).json({ error: err instanceof Error ? err.message : 'AI request failed' });
-    }
-  });
-
-  // POST /api/ai/chat
-  router.post('/chat', async (req: Request, res: Response) => {
-    const parsed = chatSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' });
-    }
-
-    try {
-      const result = await chatWellbeing(parsed.data.messages);
-      return res.json(result);
-    } catch (err) {
-      console.error('Wellbeing chat error:', err);
-      return res.status(500).json({ error: 'AI chat failed' });
     }
   });
 
