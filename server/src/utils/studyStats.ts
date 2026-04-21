@@ -1,5 +1,6 @@
 import { UserModel } from '../models/User';
 import { postFeedItem } from './feed';
+import { checkAndAwardAchievements } from './achievements';
 
 export function getTodayUTC(): string {
   return new Date().toISOString().slice(0, 10);
@@ -71,4 +72,5 @@ export async function logStudyActivity(userId: string, durationMinutes: number):
   await UserModel.findByIdAndUpdate(userId, { $inc: { totalStudyMinutes: durationMinutes } });
   await updateStreak(userId);
   await checkStreakMilestones(userId);
+  await checkAndAwardAchievements(userId).catch(() => {});
 }

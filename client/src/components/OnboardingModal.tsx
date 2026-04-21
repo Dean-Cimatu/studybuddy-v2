@@ -99,8 +99,8 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const STEP_LABELS = ['Welcome', 'Goals', 'Modules', 'Ready'];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm md:p-4">
+      <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-xl w-full md:max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Progress dots */}
         <div className="flex justify-center gap-2 pt-6 pb-2">
           {STEP_LABELS.map((_, i) => (

@@ -6,6 +6,7 @@ import { FeedItemModel } from '../models/FeedItem';
 import { UserModel } from '../models/User';
 import { StudySessionModel } from '../models/StudySession';
 import { getWeekStartUTC } from '../utils/studyStats';
+import { awardAchievement } from '../utils/achievements';
 
 const router = Router();
 router.use(requireAuth);
@@ -103,6 +104,7 @@ router.post('/join', async (req: Request, res: Response) => {
 
   group.members.push({ userId, name: req.user!.displayName, joinedAt: new Date() });
   await group.save();
+  await awardAchievement(userId.toString(), 'social-join').catch(() => {});
 
   return res.json({ group: group.toJSON() });
 });

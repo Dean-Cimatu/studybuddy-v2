@@ -5,6 +5,7 @@ import { StudyPlanModel } from '../models/StudyPlan';
 import { generateWeeklyPlan, getWeekStartDate } from '../services/studyPlanner';
 import { updateEvent, deleteEvent } from '../services/googleCalendar';
 import { postFeedItem } from '../utils/feed';
+import { awardAchievement } from '../utils/achievements';
 
 const router = Router();
 router.use(requireAuth);
@@ -18,6 +19,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       totalMinutes: plan.totalPlannedMinutes,
       sessionCount: plan.sessions.length,
     }).catch(() => {});
+    await awardAchievement(req.user!._id.toString(), 'first-plan').catch(() => {});
     return res.status(201).json({ plan });
   } catch (err) {
     console.error('Plan generation error:', err);

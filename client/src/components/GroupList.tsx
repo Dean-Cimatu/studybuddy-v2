@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGroups, useCreateGroup, useJoinGroup, useLeaveGroup } from '../hooks/useGroups';
+import { useToast } from '../contexts/ToastContext';
 import type { StudyGroup } from '@studybuddy/shared';
 
 interface GroupListProps {
@@ -19,6 +20,7 @@ export function GroupList({ selectedGroupId, onSelectGroup }: GroupListProps) {
   const [inviteCode, setInviteCode] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   function copyInviteCode(code: string, id: string) {
     navigator.clipboard.writeText(code).then(() => {
@@ -34,8 +36,11 @@ export function GroupList({ selectedGroupId, onSelectGroup }: GroupListProps) {
       await createGroup.mutateAsync(createName.trim());
       setCreateName('');
       setShowCreate(false);
+      showToast('Group created!', 'success');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to create group');
+      const msg = e instanceof Error ? e.message : 'Failed to create group';
+      setError(msg);
+      showToast(msg, 'error');
     }
   }
 
@@ -46,8 +51,11 @@ export function GroupList({ selectedGroupId, onSelectGroup }: GroupListProps) {
       await joinGroup.mutateAsync(inviteCode.trim());
       setInviteCode('');
       setShowJoin(false);
+      showToast('Joined group!', 'success');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Invalid invite code');
+      const msg = e instanceof Error ? e.message : 'Invalid invite code';
+      setError(msg);
+      showToast(msg, 'error');
     }
   }
 

@@ -222,7 +222,7 @@ export function Calendar() {
   const [month, setMonth] = useState(today.getMonth());
   const [selected, setSelected] = useState<string | null>(null);
 
-  const { data: tasks = [] } = useTasks();
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { data: modules = [] } = useModules();
 
   const monthStart = new Date(year, month, 1).toISOString();
@@ -258,6 +258,23 @@ export function Calendar() {
   }
 
   const days = buildGrid(year, month);
+
+  if (tasksLoading) {
+    return (
+      <div className="card-base p-4 sm:p-6">
+        <div className="flex justify-between items-center mb-4">
+          <div className="w-6 h-6 skeleton" />
+          <div className="w-32 h-6 skeleton" />
+          <div className="w-6 h-6 skeleton" />
+        </div>
+        <div className="grid grid-cols-7 gap-px">
+          {Array.from({ length: 35 }).map((_, i) => (
+            <div key={i} className="h-10 skeleton m-0.5 rounded" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   function prevMonth() {
     if (month === 0) { setYear(y => y - 1); setMonth(11); }

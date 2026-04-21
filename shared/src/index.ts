@@ -41,6 +41,11 @@ export type { StudyPlan, StudyPlanSession } from './types/planner';
 
 export type { StudyGroup, GroupMember } from './types/group';
 
+// ── Achievements ──────────────────────────────────────────────────────────────
+
+export type { Achievement } from './types/achievement';
+export { ACHIEVEMENTS } from './types/achievement';
+
 // ── AI / Chat ─────────────────────────────────────────────────────────────────
 
 export type MessageRole = 'user' | 'assistant';

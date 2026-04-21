@@ -216,7 +216,7 @@ describe('GET /api/groups/:id/feed', () => {
     const feedRes = await request(app).get(`/api/groups/${groupId}/feed`).set('Cookie', aliceCookie);
     expect(feedRes.status).toBe(200);
     expect(feedRes.body.items.length).toBeGreaterThanOrEqual(1);
-    expect(feedRes.body.items[0].type).toBe('session-complete');
+    expect(feedRes.body.items.some((i: { type: string }) => i.type === 'session-complete')).toBe(true);
   });
 
   it('non-member cannot access feed', async () => {

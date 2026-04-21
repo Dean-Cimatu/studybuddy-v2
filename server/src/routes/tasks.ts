@@ -5,6 +5,7 @@ import { ModuleModel } from '../models/Module';
 import { requireAuth } from '../middleware/requireAuth';
 import { breakdownGoal } from '../ai/claude';
 import { postFeedItem } from '../utils/feed';
+import { awardAchievement } from '../utils/achievements';
 
 const router = Router();
 router.use(requireAuth);
@@ -117,6 +118,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
             goalTitle: goal.title,
             percentage: 100,
           }).catch(() => {});
+          await awardAchievement(req.user!._id.toString(), 'goal-complete').catch(() => {});
         }
       }
     }

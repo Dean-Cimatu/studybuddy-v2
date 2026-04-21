@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { GoogleCalendarConnect } from '../components/GoogleCalendarConnect';
+import { AchievementBadge } from '../components/AchievementBadge';
 import { UNIVERSITY_RESOURCES } from '../constants/universityResources';
+import { ACHIEVEMENTS } from '@studybuddy/shared';
 
 const ACCENT_COLOURS = [
   { value: 'blue', bg: 'bg-blue-500' },
@@ -19,17 +21,6 @@ const STUDY_TIMES = [
   { value: 'no-preference', label: 'Flexible' },
 ] as const;
 
-const POSSIBLE_ACHIEVEMENTS = [
-  { id: 'first-session', icon: '🚀', title: 'First Session', desc: 'Completed your first study session' },
-  { id: 'streak-7', icon: '🔥', title: '7-Day Streak', desc: 'Studied 7 days in a row' },
-  { id: 'streak-14', icon: '🔥', title: '14-Day Streak', desc: 'Studied 14 days in a row' },
-  { id: 'streak-30', icon: '💎', title: '30-Day Streak', desc: 'Studied 30 days in a row' },
-  { id: 'streak-60', icon: '🏆', title: '60-Day Streak', desc: 'Studied 60 days in a row' },
-  { id: 'streak-100', icon: '🌟', title: '100-Day Streak', desc: 'Studied 100 days in a row' },
-  { id: 'first-goal', icon: '🎯', title: 'Goal Setter', desc: 'Created your first study goal' },
-  { id: 'first-plan', icon: '📅', title: 'Planner', desc: 'Generated your first study plan' },
-  { id: 'social-butterfly', icon: '👥', title: 'Social Butterfly', desc: 'Joined a study group' },
-];
 
 function nameToColour(name: string): string {
   let hash = 0;
@@ -93,12 +84,10 @@ export function SettingsPage() {
     };
   }, []);
 
-  const earnedAchievements = new Set(user?.achievements ?? []);
-  const milestonesAwarded = new Set((user?.streakMilestonesAwarded ?? []).map(m => `streak-${m}`));
-
-  function isEarned(id: string): boolean {
-    return earnedAchievements.has(id) || milestonesAwarded.has(id);
-  }
+  const earnedSet = new Set([
+    ...(user?.achievements ?? []),
+    ...(user?.streakMilestonesAwarded ?? []).map(m => `streak-${m}`),
+  ]);
 
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
@@ -330,23 +319,9 @@ export function SettingsPage() {
             <div className="pt-2">
               <p className="text-sm font-medium text-slate-700 mb-3">Achievements</p>
               <div className="grid grid-cols-3 gap-2">
-                {POSSIBLE_ACHIEVEMENTS.map(ach => {
-                  const earned = isEarned(ach.id);
-                  return (
-                    <div
-                      key={ach.id}
-                      title={ach.desc}
-                      className={`p-3 rounded-lg border text-center transition-all ${
-                        earned
-                          ? 'border-amber-200 bg-amber-50'
-                          : 'border-slate-100 bg-slate-50 opacity-40 grayscale'
-                      }`}
-                    >
-                      <div className="text-2xl mb-1">{ach.icon}</div>
-                      <p className="text-xs font-medium text-slate-700 leading-tight">{ach.title}</p>
-                    </div>
-                  );
-                })}
+                {ACHIEVEMENTS.map(ach => (
+                  <AchievementBadge key={ach.id} achievement={ach} earned={earnedSet.has(ach.id)} />
+                ))}
               </div>
             </div>
           </div>
