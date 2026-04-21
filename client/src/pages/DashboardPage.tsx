@@ -219,8 +219,8 @@ export function DashboardPage() {
 
       {/* Main content */}
       <div className="flex flex-1 gap-6 px-4 md:px-6 py-6 min-h-0">
-        {/* Left column */}
-        <main className="flex-1 min-w-0">
+        {/* Left / main column */}
+        <main className="flex-1 min-w-0 max-w-full">
           <div
             key={activeTab}
             className="transition-opacity duration-200 animate-fadeIn"
@@ -314,13 +314,16 @@ export function DashboardPage() {
           </div>
         </main>
 
-        {/* Right column */}
-        <aside className="hidden md:flex flex-col gap-4 w-[360px] shrink-0">
-          <div className="card-base p-4">
-            <TaskList />
-          </div>
-          <CompactModuleList modules={modules} />
-        </aside>
+        {/* Right column — only on Home tab */}
+        {activeTab === 'home' && (
+          <aside className="hidden md:flex flex-col gap-4 w-80 shrink-0">
+            <div className="card-base p-4">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">Tasks</h3>
+              <TaskList />
+            </div>
+            <CompactModuleList modules={modules} />
+          </aside>
+        )}
       </div>
     </div>
   );

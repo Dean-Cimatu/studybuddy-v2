@@ -160,7 +160,7 @@ export function TaskCreateForm() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 w-full px-4 py-3 rounded-xl border border-dashed border-gray-700 text-gray-500 hover:border-indigo-500 hover:text-indigo-400 transition-colors text-sm"
+        className="flex items-center gap-2 w-full px-4 py-3 rounded-xl border border-dashed border-slate-300 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-colors text-sm"
       >
         <span className="text-lg leading-none">+</span>
         Add task
@@ -172,7 +172,7 @@ export function TaskCreateForm() {
 
   if (phase === 'loading') {
     return (
-      <div className="rounded-xl border border-indigo-500/50 bg-gray-900 p-4 space-y-3">
+      <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
         <p className="text-xs text-slate-400">Breaking it down…</p>
         <div className="space-y-2">
           <SkeletonRow delay={0} />
@@ -188,8 +188,8 @@ export function TaskCreateForm() {
 
   if (phase === 'preview') {
     return (
-      <div className="rounded-xl border border-indigo-500/50 bg-gray-900 p-4 space-y-3">
-        <p className="text-sm font-medium text-white truncate">{title}</p>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+        <p className="text-sm font-medium text-slate-700 truncate">{title}</p>
         <ul className="space-y-1.5">
           {preview.map((item, i) => (
             <li
@@ -198,14 +198,14 @@ export function TaskCreateForm() {
               onDragStart={e => onDragStart(e, i)}
               onDragOver={onDragOver}
               onDrop={e => onDrop(e, i)}
-              className="flex items-center gap-2 group rounded-lg bg-gray-800 px-3 py-2 cursor-grab active:cursor-grabbing"
+              className="flex items-center gap-2 group rounded-lg bg-slate-50 px-3 py-2 cursor-grab active:cursor-grabbing border border-slate-100"
             >
-              <span className="text-gray-600 text-xs select-none">⠿</span>
+              <span className="text-slate-300 text-xs select-none">⠿</span>
               <input type="checkbox" disabled className="opacity-40 flex-shrink-0" />
               {item.editing ? (
                 <input
                   autoFocus
-                  className="flex-1 bg-transparent text-white text-sm focus:outline-none"
+                  className="flex-1 bg-transparent text-slate-700 text-sm focus:outline-none"
                   value={item.title}
                   onChange={e => setPreview(prev => prev.map((p, j) => j === i ? { ...p, title: e.target.value } : p))}
                   onBlur={() => setPreview(prev => prev.map((p, j) => j === i ? { ...p, editing: false } : p))}
@@ -216,18 +216,18 @@ export function TaskCreateForm() {
                 />
               ) : (
                 <span
-                  className="flex-1 text-sm text-gray-200 cursor-text truncate"
+                  className="flex-1 text-sm text-slate-600 cursor-text truncate"
                   onClick={() => setPreview(prev => prev.map((p, j) => j === i ? { ...p, editing: true } : p))}
                 >
                   {item.title}
                 </span>
               )}
-              <span className="text-xs text-gray-500 flex-shrink-0">{fmt(item.estimatedMinutes)}</span>
-              <span className="text-xs text-gray-600 flex-shrink-0">W{item.weekNumber}</span>
+              <span className="text-xs text-slate-400 flex-shrink-0">{fmt(item.estimatedMinutes)}</span>
+              <span className="text-xs text-slate-300 flex-shrink-0">W{item.weekNumber}</span>
               <button
                 type="button"
                 onClick={() => setPreview(prev => prev.filter((_, j) => j !== i))}
-                className="text-gray-600 hover:text-red-400 text-xs flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="text-slate-300 hover:text-red-400 text-xs flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 ×
               </button>
@@ -238,7 +238,7 @@ export function TaskCreateForm() {
           <button
             type="button"
             onClick={reset}
-            className="text-gray-500 hover:text-gray-300 text-sm px-3 py-1.5 rounded-lg transition-colors"
+            className="text-slate-400 hover:text-slate-600 text-sm px-3 py-1.5 rounded-lg transition-colors"
           >
             Cancel
           </button>
@@ -247,7 +247,7 @@ export function TaskCreateForm() {
             type="button"
             onClick={handleAddAll}
             disabled={preview.length === 0}
-            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+            className="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
           >
             Add all tasks
           </button>
@@ -260,15 +260,15 @@ export function TaskCreateForm() {
 
   if (phase === 'configure') {
     return (
-      <div className="rounded-xl border border-indigo-500/50 bg-gray-900 p-4 space-y-3">
-        <p className="text-sm font-medium text-white truncate">{title}</p>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+        <p className="text-sm font-medium text-slate-700 truncate">{title}</p>
         {modules && modules.length > 0 && (
           <div className="space-y-1">
-            <label className="text-xs text-gray-500">Module</label>
+            <label className="text-xs text-slate-500">Module</label>
             <select
               value={moduleId}
               onChange={e => setModuleId(e.target.value)}
-              className="w-full bg-gray-800 text-gray-200 text-sm rounded-lg px-3 py-1.5 border border-gray-700 focus:outline-none focus:border-indigo-500"
+              className="input w-full text-sm"
             >
               <option value="">None</option>
               {modules.map(m => (
@@ -278,12 +278,12 @@ export function TaskCreateForm() {
           </div>
         )}
         <div className="space-y-1">
-          <label className="text-xs text-gray-500">Deadline</label>
+          <label className="text-xs text-slate-500">Deadline</label>
           <input
             type="date"
             value={deadline}
             onChange={e => setDeadline(e.target.value)}
-            className="w-full bg-gray-800 text-gray-200 text-sm rounded-lg px-3 py-1.5 border border-gray-700 focus:outline-none focus:border-indigo-500"
+            className="input w-full text-sm"
           />
         </div>
         {error && <p className="text-xs text-red-400">{error}</p>}
@@ -291,7 +291,7 @@ export function TaskCreateForm() {
           <button
             type="button"
             onClick={reset}
-            className="text-gray-500 hover:text-gray-300 text-sm px-3 py-1.5 rounded-lg transition-colors"
+            className="text-slate-400 hover:text-slate-600 text-sm px-3 py-1.5 rounded-lg transition-colors"
           >
             Cancel
           </button>
@@ -299,7 +299,7 @@ export function TaskCreateForm() {
           <button
             type="button"
             onClick={handleGenerate}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+            className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
           >
             Generate
           </button>
@@ -311,38 +311,38 @@ export function TaskCreateForm() {
   // ── Normal form + optional banner ────────────────────────────────────────────
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-indigo-500/50 bg-gray-900 p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
       <input
         ref={titleRef}
         value={title}
         onChange={e => { setTitle(e.target.value); setDismissed(false); }}
         placeholder="Task title"
         required
-        className="w-full bg-transparent text-white placeholder-gray-500 text-sm font-medium focus:outline-none"
+        className="w-full bg-transparent text-slate-700 placeholder-slate-300 text-sm font-medium focus:outline-none"
       />
       <input
         value={description}
         onChange={e => setDescription(e.target.value)}
         placeholder="Description (optional)"
-        className="w-full bg-transparent text-gray-400 placeholder-gray-600 text-sm focus:outline-none"
+        className="w-full bg-transparent text-slate-500 placeholder-slate-300 text-sm focus:outline-none"
       />
 
       {showBanner && (
-        <div className="flex items-center gap-2 rounded-lg bg-blue-950/60 border border-blue-700/40 px-3 py-2">
-          <p className="flex-1 text-xs text-blue-300">
+        <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2">
+          <p className="flex-1 text-xs text-blue-600">
             This looks like a big goal. Want me to break it down into smaller tasks?
           </p>
           <button
             type="button"
             onClick={() => setPhase('configure')}
-            className="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 px-2.5 py-1 rounded-md transition-colors flex-shrink-0"
+            className="text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 px-2.5 py-1 rounded-md transition-colors flex-shrink-0"
           >
             Break it down
           </button>
           <button
             type="button"
             onClick={() => setDismissed(true)}
-            className="text-xs text-blue-400 hover:text-blue-200 flex-shrink-0 transition-colors"
+            className="text-xs text-blue-400 hover:text-blue-600 flex-shrink-0 transition-colors"
           >
             × Dismiss
           </button>
@@ -353,7 +353,7 @@ export function TaskCreateForm() {
         <select
           value={priority}
           onChange={e => setPriority(e.target.value as Priority)}
-          className="bg-gray-800 text-gray-300 text-xs rounded-lg px-2 py-1.5 border border-gray-700 focus:outline-none focus:border-indigo-500"
+          className="bg-slate-50 text-slate-500 text-xs rounded px-2 py-1.5 border border-slate-200 focus:outline-none focus:border-blue-400"
         >
           <option value="low">Low</option>
           <option value="med">Medium</option>
@@ -362,7 +362,7 @@ export function TaskCreateForm() {
         <select
           value={status}
           onChange={e => setStatus(e.target.value as TaskStatus)}
-          className="bg-gray-800 text-gray-300 text-xs rounded-lg px-2 py-1.5 border border-gray-700 focus:outline-none focus:border-indigo-500"
+          className="bg-slate-50 text-slate-500 text-xs rounded px-2 py-1.5 border border-slate-200 focus:outline-none focus:border-blue-400"
         >
           <option value="todo">Todo</option>
           <option value="doing">Doing</option>
@@ -372,20 +372,20 @@ export function TaskCreateForm() {
           type="date"
           value={dueDate}
           onChange={e => setDueDate(e.target.value)}
-          className="bg-gray-800 text-gray-300 text-xs rounded-lg px-2 py-1.5 border border-gray-700 focus:outline-none focus:border-indigo-500"
+          className="bg-slate-50 text-slate-500 text-xs rounded px-2 py-1.5 border border-slate-200 focus:outline-none focus:border-blue-400"
         />
         <div className="flex-1" />
         <button
           type="button"
           onClick={reset}
-          className="text-gray-500 hover:text-gray-300 text-sm px-3 py-1.5 rounded-lg transition-colors"
+          className="text-slate-400 hover:text-slate-600 text-sm px-3 py-1.5 rounded-lg transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!title.trim() || createTask.isPending}
-          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+          className="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
         >
           {createTask.isPending ? 'Adding…' : 'Add'}
         </button>

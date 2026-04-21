@@ -1,10 +1,40 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const STORAGE_KEY = 'studybuddy-pomodoro';
-const WORK_SECONDS = 25 * 60;
-const SHORT_BREAK = 5 * 60;
-const LONG_BREAK = 15 * 60;
-const SESSIONS_BEFORE_LONG = 4;
+const SETTINGS_KEY = 'studybuddy-pomodoro-settings';
+
+export interface PomodoroSettings {
+  workMinutes: number;
+  shortBreakMinutes: number;
+  longBreakMinutes: number;
+  sessionsBeforeLong: number;
+}
+
+export const DEFAULT_SETTINGS: PomodoroSettings = {
+  workMinutes: 25,
+  shortBreakMinutes: 5,
+  longBreakMinutes: 15,
+  sessionsBeforeLong: 4,
+};
+
+export function loadPomodoroSettings(): PomodoroSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+    const parsed = JSON.parse(raw) as Partial<PomodoroSettings>;
+    return { ...DEFAULT_SETTINGS, ...parsed };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
+export function savePomodoroSettings(s: PomodoroSettings) {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  } catch {
+    // ignore
+  }
+}
 
 interface PersistedState {
   targetEndTime: number | null;
@@ -47,13 +77,26 @@ export interface PomodoroState {
   skip: () => void;
 }
 
-export function usePomodoro(logSession?: (durationMinutes: number, moduleTag: string | null, moduleName: string | null) => void): PomodoroState {
+export function usePomodoro(
+  logSession?: (durationMinutes: number, moduleTag: string | null, moduleName: string | null) => void,
+  settings?: PomodoroSettings,
+): PomodoroState {
+  const s = settings ?? DEFAULT_SETTINGS;
+  const workSecsRef = useRef(s.workMinutes * 60);
+  const shortBreakRef = useRef(s.shortBreakMinutes * 60);
+  const longBreakRef = useRef(s.longBreakMinutes * 60);
+  const sessionsBeforeLongRef = useRef(s.sessionsBeforeLong);
+  workSecsRef.current = s.workMinutes * 60;
+  shortBreakRef.current = s.shortBreakMinutes * 60;
+  longBreakRef.current = s.longBreakMinutes * 60;
+  sessionsBeforeLongRef.current = s.sessionsBeforeLong;
+
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
   const [moduleTag, setModuleTag] = useState<string | null>(null);
   const [moduleName, setModuleName] = useState<string | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState(WORK_SECONDS);
+  const [timeRemaining, setTimeRemaining] = useState(() => s.workMinutes * 60);
 
   const targetEndTime = useRef<number | null>(null);
   const pausedRemaining = useRef<number | null>(null);
@@ -71,7 +114,9 @@ export function usePomodoro(logSession?: (durationMinutes: number, moduleTag: st
   useEffect(() => { moduleNameRef.current = moduleName; }, [moduleName]);
 
   function breakDuration(count: number) {
-    return count > 0 && count % SESSIONS_BEFORE_LONG === 0 ? LONG_BREAK : SHORT_BREAK;
+    return count > 0 && count % sessionsBeforeLongRef.current === 0
+      ? longBreakRef.current
+      : shortBreakRef.current;
   }
 
   const persist = useCallback(() => {
@@ -114,7 +159,7 @@ export function usePomodoro(logSession?: (durationMinutes: number, moduleTag: st
           const newCount = saved.sessionCount + 1;
           setSessionCount(newCount);
           sessionCountRef.current = newCount;
-          logSessionRef.current?.(WORK_SECONDS / 60, saved.moduleTag, saved.moduleName);
+          logSessionRef.current?.(workSecsRef.current / 60, saved.moduleTag, saved.moduleName);
           const breakSecs = breakDuration(newCount);
           targetEndTime.current = Date.now() + breakSecs * 1000;
           setIsBreak(true);
@@ -126,14 +171,14 @@ export function usePomodoro(logSession?: (durationMinutes: number, moduleTag: st
           isBreakRef.current = false;
           targetEndTime.current = null;
           setIsRunning(false);
-          setTimeRemaining(WORK_SECONDS);
+          setTimeRemaining(workSecsRef.current);
         }
       }
     } else if (!saved.isRunning && saved.pausedRemaining !== null) {
       pausedRemaining.current = saved.pausedRemaining;
       setTimeRemaining(saved.pausedRemaining);
     } else {
-      setTimeRemaining(saved.isBreak ? breakDuration(saved.sessionCount) : WORK_SECONDS);
+      setTimeRemaining(saved.isBreak ? breakDuration(saved.sessionCount) : workSecsRef.current);
     }
   }, []);
 
@@ -152,22 +197,22 @@ export function usePomodoro(logSession?: (durationMinutes: number, moduleTag: st
           const newCount = sessionCountRef.current + 1;
           setSessionCount(newCount);
           sessionCountRef.current = newCount;
-          logSessionRef.current?.(WORK_SECONDS / 60, moduleTagRef.current, moduleNameRef.current);
+          logSessionRef.current?.(workSecsRef.current / 60, moduleTagRef.current, moduleNameRef.current);
           const breakSecs = breakDuration(newCount);
           targetEndTime.current = Date.now() + breakSecs * 1000;
           setIsBreak(true);
           isBreakRef.current = true;
           setTimeRemaining(breakSecs);
         } else {
-          const nextCount = sessionCountRef.current % SESSIONS_BEFORE_LONG === 0
+          const nextCount = sessionCountRef.current % sessionsBeforeLongRef.current === 0
             ? 0
             : sessionCountRef.current;
           setSessionCount(nextCount);
           sessionCountRef.current = nextCount;
-          targetEndTime.current = Date.now() + WORK_SECONDS * 1000;
+          targetEndTime.current = Date.now() + workSecsRef.current * 1000;
           setIsBreak(false);
           isBreakRef.current = false;
-          setTimeRemaining(WORK_SECONDS);
+          setTimeRemaining(workSecsRef.current);
         }
       }
     }, 1000);
@@ -183,10 +228,10 @@ export function usePomodoro(logSession?: (durationMinutes: number, moduleTag: st
     moduleTagRef.current = tag_;
     moduleNameRef.current = name_;
     pausedRemaining.current = null;
-    targetEndTime.current = Date.now() + WORK_SECONDS * 1000;
+    targetEndTime.current = Date.now() + workSecsRef.current * 1000;
     setIsBreak(false);
     isBreakRef.current = false;
-    setTimeRemaining(WORK_SECONDS);
+    setTimeRemaining(workSecsRef.current);
     setIsRunning(true);
   }, []);
 
@@ -218,22 +263,22 @@ export function usePomodoro(logSession?: (durationMinutes: number, moduleTag: st
     setModuleName(null);
     moduleTagRef.current = null;
     moduleNameRef.current = null;
-    setTimeRemaining(WORK_SECONDS);
+    setTimeRemaining(workSecsRef.current);
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
   const skip = useCallback(() => {
     if (isBreakRef.current) {
-      const nextCount = sessionCountRef.current % SESSIONS_BEFORE_LONG === 0
+      const nextCount = sessionCountRef.current % sessionsBeforeLongRef.current === 0
         ? 0
         : sessionCountRef.current;
       setSessionCount(nextCount);
       sessionCountRef.current = nextCount;
-      targetEndTime.current = isRunning ? Date.now() + WORK_SECONDS * 1000 : null;
-      pausedRemaining.current = isRunning ? null : WORK_SECONDS;
+      targetEndTime.current = isRunning ? Date.now() + workSecsRef.current * 1000 : null;
+      pausedRemaining.current = isRunning ? null : workSecsRef.current;
       setIsBreak(false);
       isBreakRef.current = false;
-      setTimeRemaining(WORK_SECONDS);
+      setTimeRemaining(workSecsRef.current);
     } else {
       const newCount = sessionCountRef.current + 1;
       setSessionCount(newCount);
