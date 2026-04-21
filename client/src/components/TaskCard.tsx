@@ -13,11 +13,49 @@ const PRIORITY_LABEL: Record<Priority, string> = {
   high: 'High', med: 'Med', low: 'Low',
 };
 
-const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
-  { value: 'todo',  label: 'Todo'  },
-  { value: 'doing', label: 'Doing' },
-  { value: 'done',  label: 'Done'  },
-];
+const STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
+  todo: 'doing',
+  doing: 'done',
+  done: 'todo',
+};
+
+function StatusCircle({ status, onClick }: { status: TaskStatus; onClick: () => void }) {
+  if (status === 'done') {
+    return (
+      <button
+        onMouseDown={e => { e.preventDefault(); onClick(); }}
+        className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 hover:bg-emerald-600 transition-colors mt-0.5"
+        title="Cycle status"
+      >
+        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+        </svg>
+      </button>
+    );
+  }
+  if (status === 'doing') {
+    return (
+      <button
+        onMouseDown={e => { e.preventDefault(); onClick(); }}
+        className="w-5 h-5 rounded-full border-2 border-blue-500 flex items-center justify-center shrink-0 hover:bg-blue-50 transition-colors mt-0.5"
+        title="Cycle status"
+      >
+        <div className="w-2 h-2 rounded-full bg-blue-500" />
+      </button>
+    );
+  }
+  return (
+    <button
+      onMouseDown={e => { e.preventDefault(); onClick(); }}
+      className="w-5 h-5 rounded-full border-2 border-slate-300 shrink-0 hover:border-blue-400 transition-colors mt-0.5"
+      title="Cycle status"
+    />
+  );
+}
+
+const STATUS_LABEL: Record<TaskStatus, string> = {
+  todo: 'Todo', doing: 'Doing', done: 'Done',
+};
 
 interface Props {
   task: Task;
@@ -90,6 +128,10 @@ export function TaskCard({ task, isExpanded, onToggle, moduleColour, isSubtask }
     }
   }
 
+  function cycleStatus() {
+    void handleStatusChange(STATUS_CYCLE[task.status]);
+  }
+
   async function handleDelete() {
     await deleteTask.mutateAsync(task.id);
   }
@@ -135,6 +177,8 @@ export function TaskCard({ task, isExpanded, onToggle, moduleColour, isSubtask }
       ) : (
         <>
           <div className="flex items-start gap-2.5">
+            <StatusCircle status={task.status} onClick={cycleStatus} />
+
             <div className="flex-1 min-w-0 cursor-pointer" onClick={task.isGoal && onToggle ? onToggle : startEdit}>
               <div className="flex items-center gap-1.5">
                 {task.isGoal && onToggle && (
@@ -175,23 +219,22 @@ export function TaskCard({ task, isExpanded, onToggle, moduleColour, isSubtask }
             </button>
           </div>
 
-          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap pl-7">
             {!isSubtask && (
               <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${PRIORITY_STYLES[task.priority]}`}>
                 {PRIORITY_LABEL[task.priority]}
               </span>
             )}
 
-            <select
-              value={task.status}
-              onChange={e => void handleStatusChange(e.target.value as TaskStatus)}
-              onClick={e => e.stopPropagation()}
-              className="bg-slate-50 text-slate-500 text-xs rounded px-1.5 py-0.5 border border-slate-200 focus:outline-none focus:border-blue-400 cursor-pointer"
-            >
-              {STATUS_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${
+              task.status === 'done'
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                : task.status === 'doing'
+                ? 'bg-blue-50 text-blue-600 border-blue-200'
+                : 'bg-slate-50 text-slate-500 border-slate-200'
+            }`}>
+              {STATUS_LABEL[task.status]}
+            </span>
 
             {task.estimatedMinutes != null && (
               <span className="text-xs text-slate-400">~{task.estimatedMinutes}m</span>
