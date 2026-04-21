@@ -21,6 +21,7 @@ export interface ModuleDocument extends Document {
   weeklyTargetHours: number;
   deadlines: ModuleDeadlineDocument[];
   notes: string | null;
+  archived: boolean;
 }
 
 const deadlineSchema = new Schema<ModuleDeadlineDocument>({
@@ -44,6 +45,7 @@ const moduleSchema = new Schema<ModuleDocument>(
     weeklyTargetHours: { type: Number, default: 3, min: 0, max: 40 },
     deadlines: { type: [deadlineSchema], default: [] },
     notes: { type: String, default: null },
+    archived: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -22,5 +22,6 @@ export interface Module {
   weeklyTargetHours: number;
   deadlines: ModuleDeadline[];
   notes: string | null;
+  archived: boolean;
   createdAt: string;
 }

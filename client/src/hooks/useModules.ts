@@ -12,7 +12,7 @@ export interface CreateModuleInput {
   weeklyTargetHours?: number;
 }
 
-export type UpdateModuleInput = Partial<CreateModuleInput> & { notes?: string | null };
+export type UpdateModuleInput = Partial<CreateModuleInput> & { notes?: string | null; archived?: boolean };
 
 export interface CreateDeadlineInput {
   title: string;

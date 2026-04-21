@@ -19,6 +19,7 @@ const moduleSchema = z.object({
 const updateSchema = moduleSchema.extend({
   name: z.string().min(1).max(50).optional(),
   notes: z.string().max(2000).nullable().optional(),
+  archived: z.boolean().optional(),
 });
 
 // GET /api/modules
