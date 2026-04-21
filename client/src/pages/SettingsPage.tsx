@@ -7,10 +7,10 @@ import { ModuleList } from '../components/ModuleList';
 import { ACHIEVEMENTS } from '@studybuddy/shared';
 
 const ACCENT_COLOURS = [
-  { value: 'blue',   bg: 'bg-blue-500' },
-  { value: 'green',  bg: 'bg-emerald-500' },
-  { value: 'purple', bg: 'bg-violet-500' },
-  { value: 'amber',  bg: 'bg-amber-500' },
+  { value: 'blue',   hex: '#3B82F6' },
+  { value: 'green',  hex: '#10B981' },
+  { value: 'purple', hex: '#8B5CF6' },
+  { value: 'amber',  hex: '#F59E0B' },
 ] as const;
 
 const STUDY_TIMES = [
@@ -326,7 +326,8 @@ export function SettingsPage() {
               <button
                 key={c.value}
                 onClick={() => { setAccent(c.value); scheduleSave({ themeAccent: c.value }); }}
-                className={`w-9 h-9 rounded-full ${c.bg} transition-all ${accent === c.value ? 'ring-2 ring-offset-2 ring-slate-400' : 'opacity-70 hover:opacity-100'}`}
+                className={`w-9 h-9 rounded-full transition-all ${accent === c.value ? 'ring-2 ring-offset-2 ring-slate-400' : 'opacity-70 hover:opacity-100'}`}
+                style={{ backgroundColor: c.hex }}
                 title={c.value}
               />
             ))}

@@ -42,6 +42,7 @@ export function PomodoroTimer() {
   const [ambient, setAmbient]           = useState<AmbientType>('none');
   const [sessionNotes, setSessionNotes] = useState('');
   const [showNotes, setShowNotes]       = useState(false);
+  const [focusMode, setFocusMode]       = useState(false);
 
   const [draftWork, setDraftWork]           = useState(settings.workMinutes);
   const [draftShort, setDraftShort]         = useState(settings.shortBreakMinutes);
@@ -92,6 +93,13 @@ export function PomodoroTimer() {
   }, [timer.isRunning, timer.isBreak, ambient]);
 
   useEffect(() => () => stopAmbient(), []);
+
+  useEffect(() => {
+    if (!focusMode) return;
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setFocusMode(false); }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [focusMode]);
 
   useEffect(() => {
     if (timer.isRunning) {
@@ -190,6 +198,11 @@ export function PomodoroTimer() {
             </svg>
           </button>
         )}
+        <button onClick={() => setFocusMode(true)} className="text-slate-400 hover:text-blue-400 transition-colors p-0.5" title="Focus mode">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+          </svg>
+        </button>
         <button onClick={timer.pause} className="text-slate-400 hover:text-amber-500 transition-colors p-0.5" title="Pause">
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -387,6 +400,59 @@ export function PomodoroTimer() {
       </div>
 
       {floatingTimer}
+
+      {focusMode && timer.isRunning && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950"
+          onClick={() => setFocusMode(false)}
+        >
+          <div className="text-center select-none" onClick={e => e.stopPropagation()}>
+            <p className="text-slate-400 text-sm uppercase tracking-widest mb-2">
+              {timer.isBreak ? 'Break' : timer.moduleTag ?? 'Focus'}
+            </p>
+            <p className={`font-bold tabular-nums mb-6 ${
+              timer.isBreak ? 'text-emerald-400' : 'text-white'
+            }`} style={{ fontSize: '8rem', lineHeight: 1 }}>
+              {displayTime}
+            </p>
+
+            {/* Session progress dots */}
+            <div className="flex justify-center gap-2 mb-10">
+              {Array.from({ length: settings.sessionsBeforeLong }).map((_, i) => (
+                <span key={i} className={`w-3 h-3 rounded-full ${
+                  i < (timer.sessionCount % settings.sessionsBeforeLong)
+                    ? 'bg-blue-500'
+                    : 'bg-slate-700'
+                }`} />
+              ))}
+            </div>
+
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={timer.pause}
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-slate-800 hover:bg-slate-700 text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                Pause
+              </button>
+              <button
+                onClick={() => { timer.reset(); setFocusMode(false); }}
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-red-900/40 hover:bg-red-900/60 text-red-400 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                End session
+              </button>
+            </div>
+
+            <p className="text-slate-600 text-xs mt-8">Press Esc or click outside to exit focus mode</p>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

@@ -416,9 +416,8 @@ export function ModuleList() {
       </div>
 
       {active.length === 0 ? (
-        <div className="card-base p-8 text-center">
-          <p className="text-slate-500 text-sm mb-4">No modules yet. Add your first course to get started.</p>
-          <button className="btn-primary" onClick={() => setShowModal(true)}>Add Module</button>
+        <div className="py-6 text-center">
+          <p className="text-slate-400 dark:text-slate-500 text-sm">No modules yet. Add your first course to get started.</p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -7,10 +7,7 @@ import type { StudyPlanSession } from '@studybuddy/shared';
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const GRID_START = 8;
-const GRID_END = 22;
 const HOUR_PX = 56;
-const GRID_HEIGHT = (GRID_END - GRID_START) * HOUR_PX;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -47,6 +44,7 @@ function weekDayLabels(weekStartDate: string): string[] {
 interface SessionBlockProps {
   session: StudyPlanSession;
   index: number;
+  gridStart: number;
   active: boolean;
   onActivate: () => void;
   onClose: () => void;
@@ -54,8 +52,8 @@ interface SessionBlockProps {
   onMove: () => void;
 }
 
-function SessionBlock({ session, active, onActivate, onClose, onRemove, onMove }: SessionBlockProps) {
-  const top = (session.startHour - GRID_START) * HOUR_PX;
+function SessionBlock({ session, gridStart, active, onActivate, onClose, onRemove, onMove }: SessionBlockProps) {
+  const top = (session.startHour - gridStart) * HOUR_PX;
   const height = Math.max(24, (session.durationMinutes / 60) * HOUR_PX);
 
   return (
@@ -168,6 +166,14 @@ function WeeklyGrid({ sessions, weekStartDate, onRemove, onMove }: WeeklyGridPro
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [movingIdx, setMovingIdx] = useState<number | null>(null);
 
+  const gridStart = sessions.length
+    ? Math.max(7, Math.min(...sessions.map(s => s.startHour)) - 1)
+    : 8;
+  const gridEnd = sessions.length
+    ? Math.min(23, Math.max(...sessions.map(s => s.startHour + Math.ceil(s.durationMinutes / 60))) + 2)
+    : 20;
+  const gridHeight = (gridEnd - gridStart) * HOUR_PX;
+
   const connected = useGoogleCalendarStatus();
   const weekEnd = new Date(`${weekStartDate}T00:00:00Z`);
   weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
@@ -176,7 +182,7 @@ function WeeklyGrid({ sessions, weekStartDate, onRemove, onMove }: WeeklyGridPro
     `${weekEnd.toISOString().slice(0, 10)}T23:59:59Z`
   );
 
-  const hours = Array.from({ length: GRID_END - GRID_START }, (_, i) => GRID_START + i);
+  const hours = Array.from({ length: gridEnd - gridStart }, (_, i) => gridStart + i);
 
   return (
     <div className="overflow-x-auto" onClick={() => setActiveIdx(null)}>
@@ -191,7 +197,7 @@ function WeeklyGrid({ sessions, weekStartDate, onRemove, onMove }: WeeklyGridPro
         {/* Grid body */}
         <div className="flex">
           {/* Time axis */}
-          <div className="w-10 flex-shrink-0" style={{ height: GRID_HEIGHT }}>
+          <div className="w-10 flex-shrink-0" style={{ height: gridHeight }}>
             {hours.map(h => (
               <div key={h} style={{ height: HOUR_PX }} className="text-[10px] text-slate-400 text-right pr-1.5 pt-0 leading-none">
                 {fmt12(h)}
@@ -204,14 +210,14 @@ function WeeklyGrid({ sessions, weekStartDate, onRemove, onMove }: WeeklyGridPro
             <div
               key={dayIdx}
               className="flex-1 relative border-l border-slate-100"
-              style={{ height: GRID_HEIGHT }}
+              style={{ height: gridHeight }}
             >
               {/* Hour lines */}
               {hours.map(h => (
                 <div
                   key={h}
                   className="absolute w-full border-t border-slate-100"
-                  style={{ top: (h - GRID_START) * HOUR_PX }}
+                  style={{ top: (h - gridStart) * HOUR_PX }}
                 />
               ))}
 
@@ -221,6 +227,7 @@ function WeeklyGrid({ sessions, weekStartDate, onRemove, onMove }: WeeklyGridPro
                   key={i}
                   session={s}
                   index={i}
+                  gridStart={gridStart}
                   active={activeIdx === i}
                   onActivate={() => setActiveIdx(i)}
                   onClose={() => setActiveIdx(null)}
@@ -236,14 +243,14 @@ function WeeklyGrid({ sessions, weekStartDate, onRemove, onMove }: WeeklyGridPro
                   const evDate = new Date(ev.start);
                   const weekStart = new Date(`${weekStartDate}T00:00:00Z`);
                   const diff = Math.round((new Date(ev.start.slice(0, 10) + 'T00:00:00Z').getTime() - weekStart.getTime()) / 86400000);
-                  return diff === dayIdx && evDate.getUTCHours() >= GRID_START && evDate.getUTCHours() < GRID_END;
+                  return diff === dayIdx && evDate.getUTCHours() >= gridStart && evDate.getUTCHours() < gridEnd;
                 })
                 .map(ev => {
                   const start = new Date(ev.start);
                   const end = new Date(ev.end);
                   const startH = start.getUTCHours() + start.getUTCMinutes() / 60;
                   const durationH = (end.getTime() - start.getTime()) / 3600000;
-                  const top = (startH - GRID_START) * HOUR_PX;
+                  const top = (startH - gridStart) * HOUR_PX;
                   const height = Math.max(20, durationH * HOUR_PX);
                   return (
                     <div
