@@ -262,7 +262,7 @@ export function SettingsPage() {
                       setGoalHours(val);
                       scheduleSave({ studyGoalHours: val });
                     }}
-                    className="w-24 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:border-blue-400 transition-colors"
+                    className="w-24 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-700 focus:outline-none focus:border-blue-400 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     autoFocus
                   />
                   <span className="text-sm text-slate-500 dark:text-slate-400">hours / week</span>
