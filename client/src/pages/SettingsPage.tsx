@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { GoogleCalendarConnect } from '../components/GoogleCalendarConnect';
 import { AchievementBadge } from '../components/AchievementBadge';
+import { ModuleList } from '../components/ModuleList';
 import { ACHIEVEMENTS } from '@studybuddy/shared';
 
 const ACCENT_COLOURS = [
@@ -141,7 +142,12 @@ export function SettingsPage() {
           </div>
         </section>
 
-        {/* Section 2: Study Preferences */}
+        {/* Section 2: Modules */}
+        <section className="card-base p-6 mb-6">
+          <ModuleList />
+        </section>
+
+        {/* Section 3: Study Preferences */}
         <section className="card-base p-6 mb-6">
           <h2 className="text-base font-semibold text-slate-700 mb-4">Study Preferences</h2>
           <div className="space-y-5">

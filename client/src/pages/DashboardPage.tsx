@@ -10,6 +10,7 @@ import { PomodoroTimer } from '../components/PomodoroTimer';
 import { StatsPanel } from '../components/StatsPanel';
 import { Heatmap } from '../components/Heatmap';
 import { TaskList } from '../components/TaskList';
+import { ModuleList } from '../components/ModuleList';
 import { StudyPlanView } from '../components/StudyPlanView';
 import { Calendar } from '../components/Calendar';
 import { GroupList } from '../components/GroupList';
@@ -20,6 +21,7 @@ import type { Module, ModuleDeadline } from '@studybuddy/shared';
 
 const TABS = [
   { id: 'home', label: 'Home' },
+  { id: 'modules', label: 'Modules' },
   { id: 'planner', label: 'Planner' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'social', label: 'Social' },
@@ -68,29 +70,46 @@ function UpcomingDeadlines({ modules }: { modules: Module[] }) {
   );
 }
 
-function CompactModuleList({ modules }: { modules: Module[] }) {
-  if (modules.length === 0) return null;
+function CompactModuleList({ modules, onAdd }: { modules: Module[]; onAdd?: () => void }) {
   return (
     <div className="card-base p-4">
-      <h3 className="text-sm font-semibold text-slate-700 mb-3">Modules</h3>
-      <div className="space-y-2">
-        {modules.map(mod => {
-          const nextDeadline = mod.deadlines
-            ?.filter(d => new Date(d.date) >= new Date())
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-          return (
-            <div key={mod._id} className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: mod.colour }} />
-              <span className="text-sm text-slate-700 flex-1 truncate">{mod.name}</span>
-              {nextDeadline && (
-                <span className="text-xs text-slate-400 shrink-0">
-                  {new Date(nextDeadline.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                </span>
-              )}
-            </div>
-          );
-        })}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-slate-700">Modules</h3>
+        {onAdd && (
+          <button onClick={onAdd} className="text-xs text-blue-500 hover:text-blue-700 transition-colors">
+            + Add
+          </button>
+        )}
       </div>
+      {modules.length === 0 ? (
+        <div className="text-center py-3">
+          <p className="text-sm text-slate-400 mb-2">No modules yet.</p>
+          {onAdd && (
+            <button onClick={onAdd} className="text-xs text-blue-500 hover:text-blue-700 transition-colors">
+              Add your first module →
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {modules.map(mod => {
+            const nextDeadline = mod.deadlines
+              ?.filter(d => new Date(d.date) >= new Date())
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+            return (
+              <div key={mod._id} className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: mod.colour }} />
+                <span className="text-sm text-slate-700 flex-1 truncate">{mod.name}</span>
+                {nextDeadline && (
+                  <span className="text-xs text-slate-400 shrink-0">
+                    {new Date(nextDeadline.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -233,15 +252,8 @@ export function DashboardPage() {
             {activeTab === 'home' && (
               <div className="space-y-6">
                 <StatsPanel />
-                {/* Quick actions */}
                 <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => window.dispatchEvent(new CustomEvent('studybuddy:start-session', { detail: {} }))}
-                    className="btn-primary px-6 py-2.5"
-                  >
-                    Start Studying
-                  </button>
-                  <button onClick={() => setTab('planner')} className="btn-secondary px-5 py-2.5">
+                  <button onClick={() => setTab('planner')} className="btn-primary px-5 py-2.5">
                     Plan My Week
                   </button>
                   <button onClick={() => setTab('calendar')} className="btn-secondary px-5 py-2.5">
@@ -250,9 +262,11 @@ export function DashboardPage() {
                 </div>
                 <Heatmap />
                 <UpcomingDeadlines modules={modules} />
-                <CompactModuleList modules={modules} />
+                <CompactModuleList modules={modules} onAdd={() => setTab('modules')} />
               </div>
             )}
+
+            {activeTab === 'modules' && <ModuleList />}
 
             {activeTab === 'planner' && <StudyPlanView />}
 
@@ -314,7 +328,7 @@ export function DashboardPage() {
             </button>
             {mobileModulesOpen && (
               <div className="card-base p-4">
-                <CompactModuleList modules={modules} />
+                <CompactModuleList modules={modules} onAdd={() => setTab('modules')} />
               </div>
             )}
           </div>
