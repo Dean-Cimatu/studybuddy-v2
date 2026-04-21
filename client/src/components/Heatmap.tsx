@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useStudyHistory } from '../hooks/useStats';
 import { useAuth } from '../contexts/AuthContext';
 import type { StudyHistoryDay } from '@studybuddy/shared';
@@ -81,22 +82,33 @@ function buildGrid(rawDays: StudyHistoryDay[], createdAt?: string) {
 }
 
 function HeatCell({ date, minutes, isInFuture }: { date: string; minutes: number; isInFuture: boolean }) {
-  const [visible, setVisible] = useState(false);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const cellRef = useRef<HTMLDivElement>(null);
   const formatted = new Date(date + 'T12:00:00').toLocaleDateString('en-GB', {
-    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+    weekday: 'short', day: 'numeric', month: 'short',
   });
 
+  function handleEnter() {
+    if (isInFuture || !cellRef.current) return;
+    const r = cellRef.current.getBoundingClientRect();
+    setPos({ x: r.left + r.width / 2, y: r.top });
+  }
+
   return (
-    <div className="relative" onMouseEnter={() => setVisible(true)} onMouseLeave={() => setVisible(false)}>
+    <div ref={cellRef} onMouseEnter={handleEnter} onMouseLeave={() => setPos(null)}>
       <div
         className={`rounded-sm cursor-default ${squareColor(minutes, isInFuture)} ${isInFuture ? 'opacity-40' : 'hover:opacity-75'}`}
         style={{ width: CELL, height: CELL }}
       />
-      {visible && !isInFuture && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-50 whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs text-white shadow-lg pointer-events-none">
+      {pos && createPortal(
+        <div
+          className="fixed z-[9999] whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs text-white shadow-lg pointer-events-none -translate-x-1/2"
+          style={{ left: pos.x, top: pos.y - 8, transform: 'translate(-50%, -100%)' }}
+        >
           <span className="font-medium">{formatDuration(minutes)}</span>
           <span className="text-slate-400 ml-1.5">{formatted}</span>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

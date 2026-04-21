@@ -25,37 +25,38 @@ function notify(title: string, body: string) {
 
 const SESSION_DOTS = 4;
 const AMBIENT_OPTIONS: { value: AmbientType; label: string }[] = [
-  { value: 'none', label: 'None' },
+  { value: 'none',  label: 'None' },
   { value: 'white', label: 'White noise' },
   { value: 'brown', label: 'Brown noise' },
-  { value: 'rain', label: 'Rain' },
+  { value: 'rain',  label: 'Rain' },
 ];
 
 export function PomodoroTimer() {
   const logSession = useLogSession();
   const { data: modules = [] } = useModules();
-  const [showPicker, setShowPicker] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [logged, setLogged] = useState(false);
-  const [settings, setSettings] = useState<PomodoroSettings>(() => loadPomodoroSettings());
-  const [ambient, setAmbient] = useState<AmbientType>('none');
-  const [sessionNotes, setSessionNotes] = useState('');
-  const [showNotes, setShowNotes] = useState(false);
 
-  const [draftWork, setDraftWork] = useState(settings.workMinutes);
-  const [draftShort, setDraftShort] = useState(settings.shortBreakMinutes);
-  const [draftLong, setDraftLong] = useState(settings.longBreakMinutes);
-  const [draftSessions, setDraftSessions] = useState(settings.sessionsBeforeLong);
+  const [showModulePicker, setShowModulePicker] = useState(false);
+  const [showSettings, setShowSettings]         = useState(false);
+  const [logged, setLogged]                     = useState(false);
+  const [settings, setSettings]                 = useState<PomodoroSettings>(() => loadPomodoroSettings());
+  const [ambient, setAmbient]                   = useState<AmbientType>('none');
+  const [sessionNotes, setSessionNotes]         = useState('');
+  const [showNotes, setShowNotes]               = useState(false);
 
-  const pickerRef = useRef<HTMLDivElement>(null);
-  const sessionStartRef = useRef<string | null>(null);
-  const prevIsRunningRef = useRef(false);
-  const prevIsBreakRef = useRef(false);
-  const notesRef = useRef(sessionNotes);
+  const [draftWork, setDraftWork]           = useState(settings.workMinutes);
+  const [draftShort, setDraftShort]         = useState(settings.shortBreakMinutes);
+  const [draftLong, setDraftLong]           = useState(settings.longBreakMinutes);
+  const [draftSessions, setDraftSessions]   = useState(settings.sessionsBeforeLong);
+
+  const wrapperRef         = useRef<HTMLDivElement>(null);
+  const sessionStartRef    = useRef<string | null>(null);
+  const prevIsRunningRef   = useRef(false);
+  const prevIsBreakRef     = useRef(false);
+  const notesRef           = useRef(sessionNotes);
   notesRef.current = sessionNotes;
 
   const timer = usePomodoro((durationMinutes, tag, name) => {
-    const endTime = new Date().toISOString();
+    const endTime   = new Date().toISOString();
     const startTime = sessionStartRef.current ?? new Date(Date.now() - durationMinutes * 60000).toISOString();
     logSession.mutate({
       startTime, endTime, durationMinutes, type: 'pomodoro',
@@ -70,7 +71,6 @@ export function PomodoroTimer() {
     notify('Session complete!', tag ? `Great work on ${tag}. Take a break.` : 'Great work! Take a break.');
   }, settings);
 
-  // Track session start time
   useEffect(() => {
     if (timer.isRunning && !prevIsRunningRef.current && !timer.isBreak) {
       sessionStartRef.current = new Date().toISOString();
@@ -78,7 +78,6 @@ export function PomodoroTimer() {
     prevIsRunningRef.current = timer.isRunning;
   }, [timer.isRunning, timer.isBreak]);
 
-  // Detect break ending
   useEffect(() => {
     if (!timer.isBreak && prevIsBreakRef.current && timer.isRunning) {
       playBreakEnd();
@@ -87,7 +86,6 @@ export function PomodoroTimer() {
     prevIsBreakRef.current = timer.isBreak;
   }, [timer.isBreak, timer.isRunning]);
 
-  // Ambient sound: start on focus, stop on break/pause
   useEffect(() => {
     if (timer.isRunning && !timer.isBreak && ambient !== 'none') {
       startAmbient(ambient);
@@ -96,10 +94,8 @@ export function PomodoroTimer() {
     }
   }, [timer.isRunning, timer.isBreak, ambient]);
 
-  // Stop ambient on unmount
   useEffect(() => () => stopAmbient(), []);
 
-  // Browser tab title
   useEffect(() => {
     if (timer.isRunning) {
       const label = timer.isBreak ? 'Break' : 'Study';
@@ -110,11 +106,10 @@ export function PomodoroTimer() {
     return () => { document.title = 'StudyBuddy'; };
   }, [timer.isRunning, timer.timeRemaining, timer.isBreak]);
 
-  // Close picker on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setShowPicker(false);
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowModulePicker(false);
         setShowSettings(false);
       }
     }
@@ -122,7 +117,6 @@ export function PomodoroTimer() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  // External start-session event
   useEffect(() => {
     function handleStartSession(e: Event) {
       const detail = (e as CustomEvent<{ moduleTag?: string; moduleName?: string }>).detail ?? {};
@@ -135,63 +129,63 @@ export function PomodoroTimer() {
     return () => window.removeEventListener('studybuddy:start-session', handleStartSession);
   }, [timer]);
 
-  function handlePlay() {
-    if (!showPicker) {
-      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        void Notification.requestPermission();
-      }
-      setDraftWork(settings.workMinutes);
-      setDraftShort(settings.shortBreakMinutes);
-      setDraftLong(settings.longBreakMinutes);
-      setDraftSessions(settings.sessionsBeforeLong);
-      setShowSettings(false);
+  function openModulePicker() {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      void Notification.requestPermission();
     }
-    setShowPicker(v => !v);
+    setShowSettings(false);
+    setShowModulePicker(v => !v);
+  }
+
+  function openSettings() {
+    setDraftWork(settings.workMinutes);
+    setDraftShort(settings.shortBreakMinutes);
+    setDraftLong(settings.longBreakMinutes);
+    setDraftSessions(settings.sessionsBeforeLong);
+    setShowModulePicker(false);
+    setShowSettings(v => !v);
   }
 
   function handleSelectModule(mod: Module | null) {
-    setShowPicker(false);
-    setShowSettings(false);
+    setShowModulePicker(false);
     timer.startWork(mod?.name ?? undefined, mod?.fullName ?? undefined);
     sessionStartRef.current = new Date().toISOString();
   }
 
   function handleSaveSettings() {
     const s: PomodoroSettings = {
-      workMinutes: clamp(draftWork, 1, 120),
-      shortBreakMinutes: clamp(draftShort, 1, 30),
-      longBreakMinutes: clamp(draftLong, 1, 60),
+      workMinutes:        clamp(draftWork, 1, 120),
+      shortBreakMinutes:  clamp(draftShort, 1, 30),
+      longBreakMinutes:   clamp(draftLong, 1, 60),
       sessionsBeforeLong: clamp(draftSessions, 1, 8),
     };
     savePomodoroSettings(s);
     setSettings(s);
     timer.reset();
-    setShowPicker(false);
     setShowSettings(false);
   }
 
-  const workSecs = settings.workMinutes * 60;
-  const timeColour = timer.isBreak ? 'text-emerald-500' : 'text-blue-500';
+  const workSecs   = settings.workMinutes * 60;
   const displayTime = timer.isRunning || timer.timeRemaining < workSecs
     ? formatTime(timer.timeRemaining)
     : formatTime(workSecs);
 
+  // ── Floating widget (shown when running) ─────────────────────────────────
   const floatingTimer = timer.isRunning ? createPortal(
-    <div className="fixed bottom-5 right-5 z-40 bg-white rounded-2xl shadow-xl border border-slate-200 select-none">
+    <div className="fixed bottom-5 right-5 z-40 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 select-none">
       <div className="px-4 py-3 flex items-center gap-3">
         <div className="flex gap-0.5">
           {Array.from({ length: SESSION_DOTS }).map((_, i) => (
-            <span
-              key={i}
-              className={`w-1.5 h-1.5 rounded-full ${
-                i < (timer.sessionCount % SESSION_DOTS) || (timer.sessionCount >= SESSION_DOTS && i < SESSION_DOTS)
-                  ? 'bg-blue-500' : 'bg-slate-200'
-              }`}
-            />
+            <span key={i} className={`w-1.5 h-1.5 rounded-full ${
+              i < (timer.sessionCount % SESSION_DOTS) || (timer.sessionCount >= SESSION_DOTS && i < SESSION_DOTS)
+                ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-600'
+            }`} />
           ))}
         </div>
         <div>
-          <p className="text-xs text-slate-400 leading-none mb-0.5">{timer.isBreak ? 'Break' : 'Study'}</p>
+          <p className="text-xs text-slate-400 leading-none mb-0.5">
+            {timer.isBreak ? 'Break' : timer.moduleTag ? timer.moduleTag : 'Focus'}
+          </p>
           <p className={`font-bold text-base tabular-nums leading-none ${timer.isBreak ? 'text-emerald-500' : 'text-blue-500'}`}>
             {displayTime}
           </p>
@@ -199,7 +193,7 @@ export function PomodoroTimer() {
         {!timer.isBreak && (
           <button
             onClick={() => setShowNotes(v => !v)}
-            className={`text-slate-400 hover:text-blue-400 transition-colors p-0.5 ${showNotes ? 'text-blue-400' : ''}`}
+            className={`p-0.5 transition-colors ${showNotes ? 'text-blue-400' : 'text-slate-400 hover:text-blue-400'}`}
             title="Session notes"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,11 +206,16 @@ export function PomodoroTimer() {
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
         </button>
+        <button onClick={timer.reset} className="text-slate-400 hover:text-red-400 transition-colors p-0.5" title="End session">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
       {showNotes && (
-        <div className="px-4 pb-3 border-t border-slate-100 pt-2">
+        <div className="px-4 pb-3 border-t border-slate-100 dark:border-slate-700 pt-2">
           <textarea
-            className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:border-blue-400 text-slate-700 placeholder-slate-300"
+            className="w-full text-xs border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:border-blue-400 text-slate-700 dark:text-slate-200 dark:bg-slate-700 placeholder-slate-300"
             placeholder="Notes for this session…"
             rows={3}
             maxLength={500}
@@ -229,183 +228,165 @@ export function PomodoroTimer() {
     document.body
   ) : null;
 
+  // ── Header render ─────────────────────────────────────────────────────────
   return (
     <>
-      <div className="relative flex items-center gap-1.5 select-none" ref={pickerRef}>
-        {/* Compact pill showing state + time */}
-        <div
-          className={`flex items-center gap-2 rounded-full px-3 py-1 transition-colors ${
-            timer.isRunning
-              ? timer.isBreak ? 'bg-emerald-50 border border-emerald-200' : 'bg-blue-50 border border-blue-200'
-              : 'bg-slate-100 border border-slate-200'
-          }`}
-        >
-          {/* Session progress dots */}
-          <div className="flex gap-0.5">
-            {Array.from({ length: SESSION_DOTS }).map((_, i) => (
-              <span
-                key={i}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  i < (timer.sessionCount % SESSION_DOTS) || (timer.sessionCount >= SESSION_DOTS && i < SESSION_DOTS)
-                    ? 'bg-blue-500' : 'bg-slate-300'
-                }`}
-              />
-            ))}
-          </div>
+      <div className="relative flex items-center gap-1 select-none" ref={wrapperRef}>
 
-          {timer.isRunning && (
-            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide leading-none">
-              {timer.isBreak ? 'Break' : 'Study'}
-            </span>
-          )}
-
-          <span className={`font-bold text-sm tabular-nums leading-none ${
-            timer.isRunning ? (timer.isBreak ? 'text-emerald-600' : 'text-blue-600') : 'text-slate-600'
-          }`}>
-            {displayTime}
-          </span>
-
-          {timer.moduleTag && !timer.isBreak && (
-            <span className="text-[10px] text-slate-500 max-w-[60px] truncate leading-none">
-              {timer.moduleTag}
-            </span>
-          )}
-        </div>
-
-        {logged && <span className="text-xs text-emerald-500 animate-pulse font-medium">✓ logged</span>}
-
-        {/* Controls */}
-        <div className="flex items-center gap-0.5">
-          {!timer.isRunning ? (
+        {/* ── Running state: status pill ── */}
+        {timer.isRunning ? (
+          <>
+            <div className={`flex items-center gap-2 rounded-full px-3 py-1.5 border ${
+              timer.isBreak
+                ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-700'
+                : 'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700'
+            }`}>
+              <div className="flex gap-0.5">
+                {Array.from({ length: SESSION_DOTS }).map((_, i) => (
+                  <span key={i} className={`w-1.5 h-1.5 rounded-full ${
+                    i < (timer.sessionCount % SESSION_DOTS) ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'
+                  }`} />
+                ))}
+              </div>
+              <span className={`text-xs font-medium ${timer.isBreak ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                {timer.isBreak ? 'Break' : timer.moduleTag ?? 'Focus'}
+              </span>
+              <span className={`font-bold text-sm tabular-nums ${timer.isBreak ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                {displayTime}
+              </span>
+            </div>
             <button
-              className="p-1.5 text-slate-500 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
-              onClick={handlePlay}
-              title="Start / choose module"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-              </svg>
-            </button>
-          ) : (
-            <button
-              className="p-1.5 text-slate-500 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
               onClick={timer.pause}
+              className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-full transition-colors"
               title="Pause"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
             </button>
-          )}
-
-          {(timer.isRunning || timer.timeRemaining < workSecs) && (
             <button
-              className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
               onClick={timer.reset}
-              title="Reset"
+              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
+              title="End session"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-          )}
-        </div>
+          </>
+        ) : (
+          <>
+            {/* ── Idle / paused state ── */}
+            <button
+              onClick={openModulePicker}
+              className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-200 dark:hover:border-blue-700 hover:text-blue-600 dark:hover:text-blue-400 text-slate-600 dark:text-slate-300 transition-colors"
+              title="Start focus session"
+            >
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm font-medium tabular-nums">{displayTime}</span>
+            </button>
 
-        {/* Unified dropdown */}
-        {showPicker && (
-          <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 min-w-[200px] py-1">
-            {!showSettings ? (
-              <>
-                <button
-                  className="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2"
-                  onClick={() => handleSelectModule(null)}
-                >
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                  No module
-                </button>
-                {modules.map(mod => (
+            {/* Settings gear */}
+            <button
+              onClick={openSettings}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+              title="Timer settings"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {logged && <span className="text-xs text-emerald-500 font-medium">Logged</span>}
+
+        {/* ── Module picker dropdown ── */}
+        {showModulePicker && (
+          <div className="absolute top-full right-0 mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 min-w-[180px] py-1.5">
+            <p className="px-3 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Choose module</p>
+            <button
+              className="w-full text-left px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+              onClick={() => handleSelectModule(null)}
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-500 shrink-0" />
+              No module
+            </button>
+            {modules.map(mod => (
+              <button
+                key={mod._id}
+                className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                onClick={() => handleSelectModule(mod)}
+              >
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: mod.colour }} />
+                <span className="truncate">{mod.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── Settings dropdown ── */}
+        {showSettings && (
+          <div className="absolute top-full right-0 mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 w-64 p-4">
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-3">Timer settings</p>
+
+            <div className="space-y-2.5 mb-4">
+              {[
+                { label: 'Focus (min)',         value: draftWork,     set: setDraftWork,     min: 1, max: 120 },
+                { label: 'Short break (min)',   value: draftShort,    set: setDraftShort,    min: 1, max: 30  },
+                { label: 'Long break (min)',    value: draftLong,     set: setDraftLong,     min: 1, max: 60  },
+                { label: 'Sessions before long',value: draftSessions, set: setDraftSessions, min: 1, max: 8   },
+              ].map(row => (
+                <label key={row.label} className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{row.label}</span>
+                  <input
+                    type="number"
+                    min={row.min}
+                    max={row.max}
+                    value={row.value}
+                    onChange={e => row.set(Number(e.target.value))}
+                    className="w-16 text-xs text-center border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg px-2 py-1 focus:outline-none focus:border-blue-400"
+                  />
+                </label>
+              ))}
+            </div>
+
+            <div className="mb-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Ambient sound</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {AMBIENT_OPTIONS.map(opt => (
                   <button
-                    key={mod._id}
-                    className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                    onClick={() => handleSelectModule(mod)}
+                    key={opt.value}
+                    onClick={() => setAmbient(opt.value)}
+                    className={`text-xs py-1.5 rounded-lg border transition-colors ${
+                      ambient === opt.value
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                    }`}
                   >
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: mod.colour }} />
-                    <span className="truncate">{mod.name}</span>
+                    {opt.label}
                   </button>
                 ))}
-                <div className="border-t border-slate-100 mt-1 pt-1">
-                  <button
-                    className="w-full text-left px-3 py-2 text-xs text-slate-400 hover:bg-slate-50 hover:text-slate-600 flex items-center gap-2 transition-colors"
-                    onClick={() => setShowSettings(true)}
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Timer settings
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="p-3 w-64 space-y-3">
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Timer settings</p>
-                </div>
-                <div className="space-y-2.5">
-                  <label className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-slate-500">Study (min)</span>
-                    <input type="number" min={1} max={120} value={draftWork} onChange={e => setDraftWork(Number(e.target.value))}
-                      className="w-16 text-xs text-center border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400" />
-                  </label>
-                  <label className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-slate-500">Short break (min)</span>
-                    <input type="number" min={1} max={30} value={draftShort} onChange={e => setDraftShort(Number(e.target.value))}
-                      className="w-16 text-xs text-center border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400" />
-                  </label>
-                  <label className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-slate-500">Long break (min)</span>
-                    <input type="number" min={1} max={60} value={draftLong} onChange={e => setDraftLong(Number(e.target.value))}
-                      className="w-16 text-xs text-center border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400" />
-                  </label>
-                  <label className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-slate-500">Sessions before long</span>
-                    <input type="number" min={1} max={8} value={draftSessions} onChange={e => setDraftSessions(Number(e.target.value))}
-                      className="w-16 text-xs text-center border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400" />
-                  </label>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 mb-1.5">Ambient sound</p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {AMBIENT_OPTIONS.map(opt => (
-                      <button
-                        key={opt.value}
-                        onClick={() => setAmbient(opt.value)}
-                        className={`text-xs py-1.5 rounded-lg border transition-colors ${
-                          ambient === opt.value
-                            ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <button onClick={() => setShowSettings(false)} className="flex-1 text-xs text-slate-400 hover:text-slate-600 py-1.5 rounded-lg border border-slate-200 transition-colors">
-                    Cancel
-                  </button>
-                  <button onClick={handleSaveSettings} className="flex-1 text-xs text-white bg-blue-500 hover:bg-blue-600 py-1.5 rounded-lg transition-colors">
-                    Save
-                  </button>
-                </div>
               </div>
-            )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="flex-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                className="flex-1 text-xs text-white bg-blue-500 hover:bg-blue-600 py-1.5 rounded-lg transition-colors"
+              >
+                Save
+              </button>
+            </div>
           </div>
         )}
       </div>

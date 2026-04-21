@@ -166,22 +166,6 @@ export function DashboardPage() {
             {activeTab === 'home' && (
               <div className="space-y-6">
                 <StatsPanel />
-
-                {/* Quick actions */}
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: 'Planner',  action: () => setTab('planner') },
-                    { label: 'Calendar', action: () => setTab('calendar') },
-                  ].map(item => (
-                    <button
-                      key={item.label}
-                      onClick={item.action}
-                      className="card-base py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-300 hover:shadow-md transition-shadow cursor-pointer select-none w-full"
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
                 <WeeklyReport />
                 <Heatmap />
                 <UpcomingDeadlines modules={modules} />
