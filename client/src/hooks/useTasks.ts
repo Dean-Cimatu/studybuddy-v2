@@ -12,7 +12,19 @@ export interface CreateTaskInput {
   status?: TaskStatus;
 }
 
-export type UpdateTaskInput = Partial<CreateTaskInput>;
+export type UpdateTaskInput = Partial<Omit<CreateTaskInput, 'estimatedMinutes'>> & { estimatedMinutes?: number | null };
+
+export interface BreakdownInput {
+  title: string;
+  moduleId?: string;
+  deadline?: string;
+}
+
+export interface BreakdownResult {
+  goal: Task;
+  subtasks: Task[];
+  count: number;
+}
 
 const TASKS_KEY = ['tasks'] as const;
 
@@ -69,9 +81,14 @@ export function useCreateTask() {
         title: input.title,
         description: input.description,
         dueDate: input.dueDate,
-        estimatedMinutes: input.estimatedMinutes,
+        estimatedMinutes: input.estimatedMinutes ?? null,
         priority: input.priority ?? 'med',
         status: input.status ?? 'todo',
+        parentId: null,
+        isGoal: false,
+        moduleId: null,
+        moduleTag: null,
+        order: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -101,6 +118,19 @@ export function useUpdateTask() {
       if (ctx?.previous) queryClient.setQueryData(TASKS_KEY, ctx.previous);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+  });
+}
+
+export function useBreakdownGoal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: BreakdownInput) =>
+      apiFetch<BreakdownResult>('/api/tasks/breakdown', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
   });
 }
 
