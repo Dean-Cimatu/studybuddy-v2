@@ -15,4 +15,5 @@ export interface User {
   achievements?: string[];
   streakMilestonesAwarded?: number[];
   themeAccent?: 'blue' | 'green' | 'purple' | 'amber';
+  googleCalendarConnected?: boolean;
 }

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useTasks, useUpdateTask } from '../hooks/useTasks';
 import { useModules } from '../hooks/useModules';
+import { useGoogleEvents } from '../hooks/useGoogleCalendar';
 import type { Task } from '@studybuddy/shared';
+import type { GoogleCalendarEvent } from '../hooks/useGoogleCalendar';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -75,11 +77,12 @@ interface DayCellProps {
   isCurrentMonth: boolean;
   tasks: Task[];
   deadlines: DeadlineMark[];
+  googleEvents: GoogleCalendarEvent[];
   isSelected: boolean;
   onClick: () => void;
 }
 
-function DayCell({ date, ymd, isCurrentMonth, tasks, deadlines, isSelected, onClick }: DayCellProps) {
+function DayCell({ date, ymd, isCurrentMonth, tasks, deadlines, googleEvents, isSelected, onClick }: DayCellProps) {
   const isToday = ymd === TODAY;
   const dots = tasks.map(t => t.status === 'done' ? 'done' : 'todo');
   const visible = dots.slice(0, 4);
@@ -116,6 +119,20 @@ function DayCell({ date, ymd, isCurrentMonth, tasks, deadlines, isSelected, onCl
         </div>
       )}
 
+      {googleEvents.slice(0, 2).map(ev => (
+        <div
+          key={ev.id}
+          className="text-[9px] leading-tight bg-slate-100 text-slate-500 rounded px-1 py-0.5 truncate"
+          title={ev.title}
+        >
+          {ev.allDay ? '' : new Date(ev.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' '}
+          {ev.title}
+        </div>
+      ))}
+      {googleEvents.length > 2 && (
+        <span className="text-[9px] text-slate-400">+{googleEvents.length - 2} more</span>
+      )}
+
       {deadlines.length > 0 && (
         <div className="mt-auto space-y-0.5">
           {deadlines.map((d, i) => <DeadlineBar key={i} label={d.label} colour={d.colour} />)}
@@ -131,9 +148,10 @@ interface DayPanelProps {
   date: string;
   tasks: Task[];
   deadlines: DeadlineMark[];
+  googleEvents: GoogleCalendarEvent[];
 }
 
-function DayPanel({ date, tasks, deadlines }: DayPanelProps) {
+function DayPanel({ date, tasks, deadlines, googleEvents }: DayPanelProps) {
   const updateTask = useUpdateTask();
   const formatted = new Date(`${date}T12:00:00`).toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long',
@@ -143,7 +161,7 @@ function DayPanel({ date, tasks, deadlines }: DayPanelProps) {
     <div className="mt-4 rounded-xl border border-slate-200 p-4">
       <p className="text-sm font-semibold text-slate-700 mb-3">{formatted}</p>
 
-      {tasks.length === 0 && deadlines.length === 0 && (
+      {tasks.length === 0 && deadlines.length === 0 && googleEvents.length === 0 && (
         <p className="text-xs text-slate-400">Nothing scheduled.</p>
       )}
 
@@ -153,6 +171,24 @@ function DayPanel({ date, tasks, deadlines }: DayPanelProps) {
           <span className="text-xs text-slate-600">{d.label}</span>
         </div>
       ))}
+
+      {googleEvents.length > 0 && (
+        <ul className="space-y-1.5 mb-3">
+          {googleEvents.map(ev => (
+            <li key={ev.id} className="flex items-center gap-2">
+              <span className="text-xs">📅</span>
+              <span className="text-sm text-slate-600">
+                {!ev.allDay && (
+                  <span className="text-slate-400 mr-1">
+                    {new Date(ev.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+                {ev.title}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <ul className="space-y-2">
         {tasks.map(task => (
@@ -189,6 +225,18 @@ export function Calendar() {
   const { data: tasks = [] } = useTasks();
   const { data: modules = [] } = useModules();
 
+  const monthStart = new Date(year, month, 1).toISOString();
+  const monthEnd = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  const { data: googleEventList = [] } = useGoogleEvents(monthStart, monthEnd);
+
+  const googleEventMap = new Map<string, GoogleCalendarEvent[]>();
+  for (const ev of googleEventList) {
+    const ymd = (ev.allDay ? ev.start : ev.start).slice(0, 10);
+    const list = googleEventMap.get(ymd) ?? [];
+    list.push(ev);
+    googleEventMap.set(ymd, list);
+  }
+
   const taskMap = new Map<string, Task[]>();
   for (const task of tasks) {
     if (!task.dueDate) continue;
@@ -223,6 +271,7 @@ export function Calendar() {
 
   const selectedTasks = selected ? (taskMap.get(selected) ?? []) : [];
   const selectedDeadlines = selected ? (deadlineMap.get(selected) ?? []) : [];
+  const selectedGoogleEvents = selected ? (googleEventMap.get(selected) ?? []) : [];
 
   return (
     <div className="card-base p-4 sm:p-6">
@@ -252,6 +301,7 @@ export function Calendar() {
               isCurrentMonth={day.getMonth() === month}
               tasks={taskMap.get(ymd) ?? []}
               deadlines={deadlineMap.get(ymd) ?? []}
+              googleEvents={googleEventMap.get(ymd) ?? []}
               isSelected={selected === ymd}
               onClick={() => setSelected(prev => prev === ymd ? null : ymd)}
             />
@@ -261,7 +311,12 @@ export function Calendar() {
 
       {/* Day panel */}
       {selected && (
-        <DayPanel date={selected} tasks={selectedTasks} deadlines={selectedDeadlines} />
+        <DayPanel
+          date={selected}
+          tasks={selectedTasks}
+          deadlines={selectedDeadlines}
+          googleEvents={selectedGoogleEvents}
+        />
       )}
     </div>
   );

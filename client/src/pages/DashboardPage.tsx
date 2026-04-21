@@ -1,11 +1,25 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { TaskList } from '../components/TaskList';
 import { Sidebar } from '../components/Sidebar';
+import { GoogleCalendarConnect } from '../components/GoogleCalendarConnect';
 
 export function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [calendarToast, setCalendarToast] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('calendar') === 'connected') {
+      void refreshUser();
+      setCalendarToast(true);
+      setSearchParams({}, { replace: true });
+      const t = setTimeout(() => setCalendarToast(false), 3500);
+      return () => clearTimeout(t);
+    }
+  }, []);
 
   async function handleLogout() {
     await logout();
@@ -14,6 +28,11 @@ export function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
+      {calendarToast && (
+        <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white text-sm px-4 py-2 rounded-lg shadow-lg">
+          Google Calendar connected ✓
+        </div>
+      )}
       {/* Top nav */}
       <header className="h-14 border-b border-gray-800 px-6 flex items-center gap-4 shrink-0">
         <span className="text-lg">📚</span>
@@ -46,7 +65,8 @@ export function DashboardPage() {
         </main>
 
         {/* Sidebar — 35% */}
-        <aside className="flex-[35] min-w-[280px] max-w-sm border-l border-gray-800 overflow-y-auto p-4">
+        <aside className="flex-[35] min-w-[280px] max-w-sm border-l border-gray-800 overflow-y-auto p-4 space-y-4">
+          <GoogleCalendarConnect />
           <Sidebar />
         </aside>
       </div>

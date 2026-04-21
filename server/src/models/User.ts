@@ -1,8 +1,15 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import type { User } from '@studybuddy/shared';
 
+export interface GoogleTokens {
+  accessToken: string | null;
+  refreshToken: string | null;
+  expiresAt: number | null;
+}
+
 export interface UserDocument extends Omit<User, 'id' | 'createdAt'>, Document {
   passwordHash: string;
+  googleTokens: GoogleTokens;
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -22,6 +29,12 @@ const userSchema = new Schema<UserDocument>(
     achievements: { type: [String], default: [] },
     streakMilestonesAwarded: { type: [Number], default: [] },
     themeAccent: { type: String, enum: ['blue', 'green', 'purple', 'amber'], default: 'blue' },
+    googleCalendarConnected: { type: Boolean, default: false },
+    googleTokens: {
+      accessToken: { type: String, default: null },
+      refreshToken: { type: String, default: null },
+      expiresAt: { type: Number, default: null },
+    },
   },
   {
     timestamps: true,
@@ -31,6 +44,7 @@ const userSchema = new Schema<UserDocument>(
         delete ret['_id'];
         delete ret['__v'];
         delete ret['passwordHash'];
+        delete ret['googleTokens'];
         return ret;
       },
     },
