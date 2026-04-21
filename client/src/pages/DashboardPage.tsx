@@ -177,24 +177,27 @@ export function DashboardPage() {
             {activeTab === 'calendar' && <Calendar />}
 
             {activeTab === 'social' && (
-              <div className="flex gap-6">
-                <div className="w-72 shrink-0 space-y-4">
+              <div className="flex gap-4 min-h-[480px]">
+                {/* Sidebar */}
+                <div className="w-52 shrink-0 card-base py-3">
                   <GroupList selectedGroupId={selectedGroupId} onSelectGroup={setSelectedGroupId} />
-                  {selectedGroupId && (
-                    <div className="card-base p-4">
-                      <h3 className="text-sm font-semibold text-slate-700 mb-3">Members</h3>
-                      <GroupMemberStatus groupId={selectedGroupId} />
-                    </div>
-                  )}
                 </div>
-                <div className="flex-1 min-w-0">
+
+                {/* Main panel */}
+                <div className="flex-1 min-w-0 flex flex-col gap-3">
                   {selectedGroupId ? (
-                    <div className="card-base p-4">
-                      <h3 className="text-sm font-semibold text-slate-700 mb-4">Activity Feed</h3>
-                      <ActivityFeed groupId={selectedGroupId} />
-                    </div>
+                    <>
+                      <div className="card-base p-4">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Members</p>
+                        <GroupMemberStatus groupId={selectedGroupId} />
+                      </div>
+                      <div className="card-base p-4 flex-1">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Activity</p>
+                        <ActivityFeed groupId={selectedGroupId} />
+                      </div>
+                    </>
                   ) : (
-                    <div className="card-base p-8 text-center text-slate-400">
+                    <div className="card-base flex-1 flex items-center justify-center text-slate-500 text-sm">
                       Select a group to see activity
                     </div>
                   )}

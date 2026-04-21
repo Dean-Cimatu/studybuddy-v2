@@ -1,8 +1,11 @@
 import { useGroup } from '../hooks/useGroups';
-import { StreakBadge } from './StreakBadge';
 
 interface GroupMemberStatusProps {
   groupId: string;
+}
+
+function initials(name: string) {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
 export function GroupMemberStatus({ groupId }: GroupMemberStatusProps) {
@@ -10,10 +13,8 @@ export function GroupMemberStatus({ groupId }: GroupMemberStatusProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-10 rounded bg-slate-800 animate-pulse" />
-        ))}
+      <div className="flex gap-2">
+        {[1, 2, 3].map(i => <div key={i} className="w-8 h-8 rounded-full bg-slate-700 animate-pulse" />)}
       </div>
     );
   }
@@ -21,23 +22,27 @@ export function GroupMemberStatus({ groupId }: GroupMemberStatusProps) {
   if (!data) return null;
 
   const { group, memberStats } = data;
-
   const sorted = [...group.members].sort((a, b) => {
-    const aHours = memberStats[a.userId]?.hoursThisWeek ?? 0;
-    const bHours = memberStats[b.userId]?.hoursThisWeek ?? 0;
-    return bHours - aHours;
+    const ah = memberStats[a.userId]?.hoursThisWeek ?? 0;
+    const bh = memberStats[b.userId]?.hoursThisWeek ?? 0;
+    return bh - ah;
   });
 
   return (
-    <div className="space-y-1.5">
+    <div className="flex flex-wrap gap-2">
       {sorted.map(member => {
         const stats = memberStats[member.userId] ?? { hoursThisWeek: 0, streak: 0 };
         return (
-          <div key={member.userId} className="flex items-center justify-between py-1.5 px-2 rounded bg-slate-800">
-            <span className="text-sm text-slate-200 font-medium truncate">{member.name}</span>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-xs text-slate-400">{stats.hoursThisWeek}h this week</span>
-              <StreakBadge streak={stats.streak} />
+          <div key={member.userId} className="flex items-center gap-2 bg-slate-800 rounded-lg px-2.5 py-1.5">
+            <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+              {initials(member.name)}
+            </div>
+            <div className="text-xs leading-tight">
+              <p className="text-slate-200 font-medium">{member.name}</p>
+              <p className="text-slate-500">
+                {stats.hoursThisWeek > 0 ? `${stats.hoursThisWeek}h` : '—'}
+                {stats.streak > 0 && <span className="ml-1.5">🔥{stats.streak}</span>}
+              </p>
             </div>
           </div>
         );

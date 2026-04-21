@@ -66,6 +66,7 @@ function savePersisted(state: PersistedState) {
 export interface PomodoroState {
   timeRemaining: number;
   isRunning: boolean;
+  isPaused: boolean;
   isBreak: boolean;
   sessionCount: number;
   moduleTag: string | null;
@@ -92,6 +93,7 @@ export function usePomodoro(
   sessionsBeforeLongRef.current = s.sessionsBeforeLong;
 
   const [isRunning, setIsRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
   const [moduleTag, setModuleTag] = useState<string | null>(null);
@@ -177,6 +179,7 @@ export function usePomodoro(
     } else if (!saved.isRunning && saved.pausedRemaining !== null) {
       pausedRemaining.current = saved.pausedRemaining;
       setTimeRemaining(saved.pausedRemaining);
+      setIsPaused(true);
     } else {
       setTimeRemaining(saved.isBreak ? breakDuration(saved.sessionCount) : workSecsRef.current);
     }
@@ -232,6 +235,7 @@ export function usePomodoro(
     setIsBreak(false);
     isBreakRef.current = false;
     setTimeRemaining(workSecsRef.current);
+    setIsPaused(false);
     setIsRunning(true);
   }, []);
 
@@ -241,6 +245,7 @@ export function usePomodoro(
     pausedRemaining.current = remaining;
     targetEndTime.current = null;
     setIsRunning(false);
+    setIsPaused(true);
     setTimeRemaining(remaining);
   }, [isRunning]);
 
@@ -248,6 +253,7 @@ export function usePomodoro(
     const remaining = pausedRemaining.current ?? timeRemaining;
     pausedRemaining.current = null;
     targetEndTime.current = Date.now() + remaining * 1000;
+    setIsPaused(false);
     setIsRunning(true);
   }, [timeRemaining]);
 
@@ -255,6 +261,7 @@ export function usePomodoro(
     targetEndTime.current = null;
     pausedRemaining.current = null;
     setIsRunning(false);
+    setIsPaused(false);
     setIsBreak(false);
     isBreakRef.current = false;
     setSessionCount(0);
@@ -292,5 +299,5 @@ export function usePomodoro(
     }
   }, [isRunning]);
 
-  return { timeRemaining, isRunning, isBreak, sessionCount, moduleTag, moduleName, startWork, pause, resume, reset, skip };
+  return { timeRemaining, isRunning, isPaused, isBreak, sessionCount, moduleTag, moduleName, startWork, pause, resume, reset, skip };
 }

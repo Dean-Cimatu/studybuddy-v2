@@ -43,6 +43,8 @@ export function PomodoroTimer() {
   const [sessionNotes, setSessionNotes] = useState('');
   const [showNotes, setShowNotes]       = useState(false);
   const [focusMode, setFocusMode]       = useState(false);
+  const [countdown, setCountdown]       = useState<number | null>(null);
+  const pendingModuleRef = useRef<{ tag?: string; name?: string } | null>(null);
 
   const [draftWork, setDraftWork]           = useState(settings.workMinutes);
   const [draftShort, setDraftShort]         = useState(settings.shortBreakMinutes);
@@ -102,6 +104,20 @@ export function PomodoroTimer() {
   }, [focusMode]);
 
   useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) {
+      const p = pendingModuleRef.current;
+      timer.startWork(p?.tag, p?.name);
+      sessionStartRef.current = new Date().toISOString();
+      pendingModuleRef.current = null;
+      setCountdown(null);
+      return;
+    }
+    const t = setTimeout(() => setCountdown(c => (c ?? 1) - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, timer]);
+
+  useEffect(() => {
     if (timer.isRunning) {
       document.title = `${timer.isBreak ? 'Break' : 'Study'} ${formatTime(timer.timeRemaining)} · StudyBuddy`;
     } else {
@@ -146,8 +162,8 @@ export function PomodoroTimer() {
 
   function handleSelectModule(mod: Module | null) {
     setShowDropdown(false);
-    timer.startWork(mod?.name ?? undefined, mod?.fullName ?? undefined);
-    sessionStartRef.current = new Date().toISOString();
+    pendingModuleRef.current = { tag: mod?.name ?? undefined, name: mod?.fullName ?? undefined };
+    setCountdown(3);
   }
 
   function handleSaveSettings() {
@@ -261,8 +277,23 @@ export function PomodoroTimer() {
     <>
       <div className="relative flex items-center gap-1 select-none" ref={wrapperRef}>
 
-        {/* Running state */}
-        {timer.isRunning ? (
+        {/* Countdown overlay */}
+        {countdown !== null ? (
+          <div className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700">
+            <span className="text-blue-600 dark:text-blue-400 text-xs font-medium">Starting in</span>
+            <span className="font-bold text-lg tabular-nums text-blue-600 dark:text-blue-400 w-4 text-center">{countdown}</span>
+            <button
+              onClick={() => { setCountdown(null); pendingModuleRef.current = null; }}
+              className="text-slate-400 hover:text-red-400 transition-colors ml-1"
+              title="Cancel"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        ) : timer.isRunning ? (
+          /* Running state */
           <>
             <div className={`flex items-center gap-2 rounded-full px-3 py-1.5 border ${
               timer.isBreak
@@ -302,8 +333,37 @@ export function PomodoroTimer() {
               </svg>
             </button>
           </>
+        ) : timer.isPaused ? (
+          /* Paused state */
+          <>
+            <div className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                {timer.isBreak ? 'Break paused' : timer.moduleTag ?? 'Paused'}
+              </span>
+              <span className="font-bold text-sm tabular-nums text-amber-600 dark:text-amber-400">{displayTime}</span>
+            </div>
+            <button
+              onClick={timer.resume}
+              className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors"
+              title="Resume"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <button
+              onClick={timer.reset}
+              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
+              title="End session"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </>
         ) : (
-          /* Idle / paused state — single pill, click to open unified dropdown */
+          /* Idle state */
           <button
             onClick={() => openDropdown('start')}
             className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-200 dark:hover:border-blue-700 hover:text-blue-600 dark:hover:text-blue-400 text-slate-600 dark:text-slate-300 transition-colors"
@@ -427,6 +487,24 @@ export function PomodoroTimer() {
 
       {floatingTimer}
 
+      {countdown !== null && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950">
+          <div className="text-center">
+            <p className="text-slate-400 text-sm uppercase tracking-widest mb-6">Get ready</p>
+            <p className="font-bold text-white tabular-nums" style={{ fontSize: '10rem', lineHeight: 1 }}>
+              {countdown === 0 ? 'Go' : countdown}
+            </p>
+            <button
+              onClick={() => { setCountdown(null); pendingModuleRef.current = null; }}
+              className="mt-12 text-slate-500 hover:text-slate-300 text-sm transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {focusMode && timer.isRunning && createPortal(
         <div
           className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950"
@@ -486,7 +564,7 @@ export function PomodoroTimer() {
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
-                Pause
+                Pause / Exit
               </button>
               <button
                 onClick={() => { timer.reset(); setFocusMode(false); }}
