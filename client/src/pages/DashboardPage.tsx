@@ -40,7 +40,12 @@ function UpcomingDeadlines({ modules }: { modules: Module[] }) {
   }
   deadlines.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  if (deadlines.length === 0) return null;
+  if (deadlines.length === 0) return (
+    <div className="card-base p-4">
+      <h3 className="text-sm font-semibold text-slate-700 mb-2">Upcoming (7 days)</h3>
+      <p className="text-sm text-slate-400">No deadlines in the next 7 days</p>
+    </div>
+  );
 
   return (
     <div className="card-base p-4">
@@ -228,8 +233,6 @@ export function DashboardPage() {
             {activeTab === 'home' && (
               <div className="space-y-6">
                 <StatsPanel />
-                <Heatmap />
-                <UpcomingDeadlines modules={modules} />
                 {/* Quick actions */}
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -245,6 +248,9 @@ export function DashboardPage() {
                     View Calendar
                   </button>
                 </div>
+                <Heatmap />
+                <UpcomingDeadlines modules={modules} />
+                <CompactModuleList modules={modules} />
               </div>
             )}
 
@@ -321,7 +327,6 @@ export function DashboardPage() {
               <h3 className="text-sm font-semibold text-slate-700 mb-3">Tasks</h3>
               <TaskList />
             </div>
-            <CompactModuleList modules={modules} />
           </aside>
         )}
       </div>
