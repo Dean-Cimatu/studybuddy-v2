@@ -40,15 +40,61 @@
 }
 
 /* ── Accent colour overrides ───────────────────────────────────────── */
-[data-accent="green"] .btn-primary  { background-color: #10B981; }
-[data-accent="green"] .btn-primary:not(:disabled):hover { background-color: #059669; }
-[data-accent="green"] .btn-secondary { color: #059669; }
-[data-accent="purple"] .btn-primary { background-color: #8B5CF6; }
-[data-accent="purple"] .btn-primary:not(:disabled):hover { background-color: #7C3AED; }
-[data-accent="purple"] .btn-secondary { color: #7C3AED; }
-[data-accent="amber"] .btn-primary  { background-color: #F59E0B; }
-[data-accent="amber"] .btn-primary:not(:disabled):hover  { background-color: #D97706; }
-[data-accent="amber"] .btn-secondary { color: #D97706; }
+/*
+  We override both the component classes (.btn-primary) and the raw Tailwind
+  utility classes (bg-blue-500, border-blue-500, text-blue-*) so that every
+  button — whether it uses btn-primary or inline conditional classes — picks
+  up the chosen accent color.
+*/
+
+/* green / emerald */
+[data-accent="green"] .btn-primary,
+[data-accent="green"] .bg-blue-500,
+[data-accent="green"] .bg-blue-400  { background-color: #10B981 !important; }
+[data-accent="green"] .btn-primary:not(:disabled):hover,
+[data-accent="green"] .bg-blue-600,
+[data-accent="green"] .hover\:bg-blue-600:hover { background-color: #059669 !important; }
+[data-accent="green"] .border-blue-500,
+[data-accent="green"] .border-blue-400 { border-color: #10B981 !important; }
+[data-accent="green"] .btn-secondary,
+[data-accent="green"] .text-blue-500,
+[data-accent="green"] .text-blue-600  { color: #059669 !important; }
+[data-accent="green"] .ring-blue-400,
+[data-accent="green"] .focus\:border-blue-400:focus { border-color: #10B981 !important; }
+[data-accent="green"] input[type="range"],
+[data-accent="green"] .accent-blue-500 { accent-color: #10B981; }
+
+/* purple / violet */
+[data-accent="purple"] .btn-primary,
+[data-accent="purple"] .bg-blue-500,
+[data-accent="purple"] .bg-blue-400  { background-color: #8B5CF6 !important; }
+[data-accent="purple"] .btn-primary:not(:disabled):hover,
+[data-accent="purple"] .bg-blue-600,
+[data-accent="purple"] .hover\:bg-blue-600:hover { background-color: #7C3AED !important; }
+[data-accent="purple"] .border-blue-500,
+[data-accent="purple"] .border-blue-400 { border-color: #8B5CF6 !important; }
+[data-accent="purple"] .btn-secondary,
+[data-accent="purple"] .text-blue-500,
+[data-accent="purple"] .text-blue-600  { color: #7C3AED !important; }
+[data-accent="purple"] .focus\:border-blue-400:focus { border-color: #8B5CF6 !important; }
+[data-accent="purple"] input[type="range"],
+[data-accent="purple"] .accent-blue-500 { accent-color: #8B5CF6; }
+
+/* amber */
+[data-accent="amber"] .btn-primary,
+[data-accent="amber"] .bg-blue-500,
+[data-accent="amber"] .bg-blue-400  { background-color: #F59E0B !important; }
+[data-accent="amber"] .btn-primary:not(:disabled):hover,
+[data-accent="amber"] .bg-blue-600,
+[data-accent="amber"] .hover\:bg-blue-600:hover { background-color: #D97706 !important; }
+[data-accent="amber"] .border-blue-500,
+[data-accent="amber"] .border-blue-400 { border-color: #F59E0B !important; }
+[data-accent="amber"] .btn-secondary,
+[data-accent="amber"] .text-blue-500,
+[data-accent="amber"] .text-blue-600  { color: #D97706 !important; }
+[data-accent="amber"] .focus\:border-blue-400:focus { border-color: #F59E0B !important; }
+[data-accent="amber"] input[type="range"],
+[data-accent="amber"] .accent-blue-500 { accent-color: #F59E0B; }
 
 @layer utilities {
   .animate-toast-in {
