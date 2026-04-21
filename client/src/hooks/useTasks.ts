@@ -26,7 +26,7 @@ export interface BreakdownResult {
   count: number;
 }
 
-const TASKS_KEY = ['tasks'] as const;
+export const TASKS_KEY = ['tasks'] as const;
 
 async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { credentials: 'include', ...init });

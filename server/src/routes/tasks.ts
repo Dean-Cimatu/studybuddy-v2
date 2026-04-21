@@ -45,7 +45,7 @@ router.get('/', async (req: Request, res: Response) => {
     }
 
     const result = tasks.map(t => {
-      const json = t.toJSON() as Record<string, unknown>;
+      const json = t.toJSON() as unknown as Record<string, unknown>;
       if (t.isGoal) {
         const counts = subtaskCounts.get(t._id.toString()) ?? { total: 0, completed: 0 };
         json['subtaskCount'] = counts.total;
