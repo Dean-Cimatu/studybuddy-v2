@@ -168,17 +168,43 @@ export function PomodoroTimer() {
     ? formatTime(timer.timeRemaining)
     : formatTime(workSecs);
 
+  const totalSecs = timer.isBreak
+    ? (timer.sessionCount > 0 && timer.sessionCount % settings.sessionsBeforeLong === 0
+        ? settings.longBreakMinutes * 60
+        : settings.shortBreakMinutes * 60)
+    : workSecs;
+  const elapsed = totalSecs - timer.timeRemaining;
+  const ringProgress = totalSecs > 0 ? Math.min(1, Math.max(0, elapsed / totalSecs)) : 0;
+
+  const RING_R = 54;
+  const RING_C = 2 * Math.PI * RING_R;
+  const ringOffset = RING_C * (1 - ringProgress);
+
   // ── Floating widget ───────────────────────────────────────────────────────
   const floatingTimer = timer.isRunning ? createPortal(
     <div className="fixed bottom-5 right-5 z-40 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 select-none">
       <div className="px-4 py-3 flex items-center gap-3">
-        <div className="flex gap-0.5">
-          {Array.from({ length: SESSION_DOTS }).map((_, i) => (
-            <span key={i} className={`w-1.5 h-1.5 rounded-full ${
-              i < (timer.sessionCount % SESSION_DOTS) ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-600'
-            }`} />
-          ))}
-        </div>
+        {/* Mini ring */}
+        {(() => {
+          const r = 14; const c = 2 * Math.PI * r;
+          return (
+            <div className="relative shrink-0">
+              <svg width="36" height="36" className="-rotate-90">
+                <circle cx="18" cy="18" r={r} fill="none"
+                  stroke={timer.isBreak ? 'rgb(6 78 59 / 0.4)' : 'rgb(30 58 138 / 0.3)'}
+                  strokeWidth="3" />
+                <circle cx="18" cy="18" r={r} fill="none"
+                  stroke={timer.isBreak ? '#34d399' : '#60a5fa'}
+                  strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray={c}
+                  strokeDashoffset={c * (1 - ringProgress)} />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-400 rotate-90">
+                {timer.sessionCount % SESSION_DOTS + 1}
+              </span>
+            </div>
+          );
+        })()}
         <div>
           <p className="text-xs text-slate-400 leading-none mb-0.5">
             {timer.isBreak ? 'Break' : timer.moduleTag ?? 'Focus'}
@@ -407,14 +433,39 @@ export function PomodoroTimer() {
           onClick={() => setFocusMode(false)}
         >
           <div className="text-center select-none" onClick={e => e.stopPropagation()}>
-            <p className="text-slate-400 text-sm uppercase tracking-widest mb-2">
+            <p className="text-slate-400 text-sm uppercase tracking-widest mb-8">
               {timer.isBreak ? 'Break' : timer.moduleTag ?? 'Focus'}
             </p>
-            <p className={`font-bold tabular-nums mb-6 ${
-              timer.isBreak ? 'text-emerald-400' : 'text-white'
-            }`} style={{ fontSize: '8rem', lineHeight: 1 }}>
-              {displayTime}
-            </p>
+
+            {/* Circular progress ring — winds up (fills) as time is consumed */}
+            <div className="relative inline-flex items-center justify-center mb-8">
+              <svg width="240" height="240" className="-rotate-90">
+                {/* Track */}
+                <circle
+                  cx="120" cy="120" r={RING_R}
+                  fill="none"
+                  stroke={timer.isBreak ? 'rgb(6 78 59 / 0.4)' : 'rgb(30 58 138 / 0.4)'}
+                  strokeWidth="6"
+                />
+                {/* Progress — strokeDashoffset set directly, no CSS animation */}
+                <circle
+                  cx="120" cy="120" r={RING_R}
+                  fill="none"
+                  stroke={timer.isBreak ? '#34d399' : '#60a5fa'}
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={RING_C}
+                  strokeDashoffset={ringOffset}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`font-bold tabular-nums ${
+                  timer.isBreak ? 'text-emerald-400' : 'text-white'
+                }`} style={{ fontSize: '3.5rem', lineHeight: 1 }}>
+                  {displayTime}
+                </span>
+              </div>
+            </div>
 
             {/* Session progress dots */}
             <div className="flex justify-center gap-2 mb-10">
