@@ -6,7 +6,7 @@ import { TaskCreateForm } from './TaskCreateForm';
 import type { TaskStatus } from '@studybuddy/shared';
 
 const COLUMNS: { status: TaskStatus; label: string; accent: string }[] = [
-  { status: 'todo',  label: 'Todo',  accent: 'bg-gray-500' },
+  { status: 'todo',  label: 'Todo',  accent: 'bg-slate-400' },
   { status: 'doing', label: 'Doing', accent: 'bg-indigo-500' },
   { status: 'done',  label: 'Done',  accent: 'bg-emerald-500' },
 ];
@@ -28,7 +28,7 @@ export function TaskList() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-40 text-gray-600 text-sm">
+      <div className="flex items-center justify-center h-40 text-slate-500 text-sm">
         Loading tasks…
       </div>
     );
@@ -53,8 +53,8 @@ export function TaskList() {
           <section key={status}>
             <div className="flex items-center gap-2 mb-3">
               <span className={`w-2 h-2 rounded-full ${accent}`} />
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400">{label}</h2>
-              <span className="text-xs text-gray-600 ml-1">{count}</span>
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</h2>
+              <span className="text-xs text-slate-500 ml-1">{count}</span>
             </div>
 
             <div className="space-y-2">
@@ -71,7 +71,7 @@ export function TaskList() {
                       moduleColour={goal.moduleId ? moduleColours.get(goal.moduleId) : undefined}
                     />
                     {isExpanded && subtasks.length > 0 && (
-                      <div className="ml-4 mt-1.5 border-l-2 border-gray-800 pl-3 space-y-1.5">
+                      <div className="ml-4 mt-1.5 border-l-2 border-slate-200 pl-3 space-y-1.5">
                         {subtasks.map(sub => (
                           <TaskCard key={sub.id} task={sub} isSubtask />
                         ))}
@@ -86,7 +86,7 @@ export function TaskList() {
               ))}
 
               {count === 0 && (
-                <p className="text-xs text-gray-700 px-1 py-2">No tasks here yet.</p>
+                <p className="text-xs text-slate-400 px-1 py-2">No tasks here yet.</p>
               )}
             </div>
           </section>

@@ -1,5 +1,14 @@
 import { useGoogleCalendarStatus, useConnectGoogle, useDisconnectGoogle } from '../hooks/useGoogleCalendar';
 
+function CalendarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? 'w-5 h-5'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth={1.5} />
+      <path strokeLinecap="round" strokeWidth={1.5} d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+}
+
 export function GoogleCalendarConnect() {
   const connected = useGoogleCalendarStatus();
   const connect = useConnectGoogle();
@@ -9,7 +18,7 @@ export function GoogleCalendarConnect() {
     return (
       <div className="card-base p-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-lg">📅</span>
+          <CalendarIcon className="w-5 h-5 text-emerald-500" />
           <span className="text-sm font-medium text-emerald-600">Google Calendar connected</span>
         </div>
         <button
@@ -26,7 +35,7 @@ export function GoogleCalendarConnect() {
   return (
     <div className="card-base p-4">
       <div className="flex items-start gap-3">
-        <span className="text-2xl">📅</span>
+        <CalendarIcon className="w-6 h-6 text-slate-400 shrink-0 mt-0.5" />
         <div className="flex-1">
           <p className="text-sm font-semibold text-slate-800">Connect Google Calendar</p>
           <p className="text-xs text-slate-500 mt-0.5">

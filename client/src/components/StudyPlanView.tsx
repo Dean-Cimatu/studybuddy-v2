@@ -354,7 +354,12 @@ export function StudyPlanView() {
 
     return (
       <div className="card-base p-8 text-center">
-        <div className="text-4xl mb-4">📅</div>
+        <div className="flex justify-center mb-4">
+          <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth={1.5} />
+            <path strokeLinecap="round" strokeWidth={1.5} d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+        </div>
         <h2 className="text-xl font-semibold text-slate-800 mb-2">Plan your week</h2>
 
         {modules.length === 0 ? (

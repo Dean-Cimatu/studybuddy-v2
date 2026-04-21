@@ -192,7 +192,7 @@ export function useChat() {
     if (!lastMessage) return '';
     if (lastMessage.role === 'user') return lastMessage.content;
     if (lastMessage.mode === 'wellbeing') return lastMessage.content;
-    if (lastMessage.mode === 'tasks') return `✅ Created ${lastMessage.taskCount} task${lastMessage.taskCount !== 1 ? 's' : ''}`;
+    if (lastMessage.mode === 'tasks') return `Created ${lastMessage.taskCount} task${lastMessage.taskCount !== 1 ? 's' : ''}`;
     if (lastMessage.mode === 'error') return lastMessage.content;
     return '';
   })();

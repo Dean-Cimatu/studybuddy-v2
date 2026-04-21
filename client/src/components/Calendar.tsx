@@ -176,7 +176,10 @@ function DayPanel({ date, tasks, deadlines, googleEvents }: DayPanelProps) {
         <ul className="space-y-1.5 mb-3">
           {googleEvents.map(ev => (
             <li key={ev.id} className="flex items-center gap-2">
-              <span className="text-xs">📅</span>
+              <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth={1.5} />
+                  <path strokeLinecap="round" strokeWidth={1.5} d="M16 2v4M8 2v4M3 10h18" />
+                </svg>
               <span className="text-sm text-slate-600">
                 {!ev.allDay && (
                   <span className="text-slate-400 mr-1">
