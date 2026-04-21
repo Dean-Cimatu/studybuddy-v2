@@ -12,6 +12,7 @@ import statsRouter from './routes/stats';
 import modulesRouter from './routes/modules';
 import calendarRouter from './routes/calendar';
 import plannerRouter from './routes/planner';
+import groupsRouter from './routes/groups';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/api/stats', statsRouter);
 app.use('/api/modules', modulesRouter);
 app.use('/api/calendar', calendarRouter);
 app.use('/api/planner', plannerRouter);
+app.use('/api/groups', groupsRouter);
 
 connect()
   .then(() => {

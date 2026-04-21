@@ -24,7 +24,7 @@ vi.mock('../services/studyPlanner', async () => {
         { $set: { sessions: MOCK_SESSIONS, totalPlannedMinutes: 100, generatedAt: new Date().toISOString() } },
         { upsert: true, new: true }
       );
-      return plan!.toJSON() as StudyPlan;
+      return plan!.toJSON() as unknown as StudyPlan;
     }),
   };
 });

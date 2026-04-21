@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/requireAuth';
 import { StudyPlanModel } from '../models/StudyPlan';
 import { generateWeeklyPlan, getWeekStartDate } from '../services/studyPlanner';
 import { updateEvent, deleteEvent } from '../services/googleCalendar';
+import { postFeedItem } from '../utils/feed';
 
 const router = Router();
 router.use(requireAuth);
@@ -13,6 +14,10 @@ router.post('/generate', async (req: Request, res: Response) => {
   const { pushToGoogleCalendar = false } = req.body as { pushToGoogleCalendar?: boolean };
   try {
     const plan = await generateWeeklyPlan(req.user!._id.toString(), pushToGoogleCalendar);
+    await postFeedItem(req.user!._id.toString(), req.user!.displayName, 'plan-generated', {
+      totalMinutes: plan.totalPlannedMinutes,
+      sessionCount: plan.sessions.length,
+    }).catch(() => {});
     return res.status(201).json({ plan });
   } catch (err) {
     console.error('Plan generation error:', err);

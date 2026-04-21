@@ -5,6 +5,7 @@ import { StudySessionModel } from '../models/StudySession';
 import { TaskModel } from '../models/Task';
 import { UserModel } from '../models/User';
 import { logStudyActivity, getWeekStartUTC } from '../utils/studyStats';
+import { postFeedItem } from '../utils/feed';
 
 const router = Router();
 
@@ -37,6 +38,10 @@ router.post('/session', requireAuth, async (req: Request, res: Response) => {
     });
 
     await logStudyActivity(userId, parsed.data.durationMinutes);
+    await postFeedItem(userId, req.user!.displayName, 'session-complete', {
+      durationMinutes: parsed.data.durationMinutes,
+      moduleTag: parsed.data.moduleTag ?? null,
+    }).catch(() => {});
 
     return res.status(201).json({ session });
   } catch (err) {

@@ -4,6 +4,7 @@ import { TaskModel } from '../models/Task';
 import { ModuleModel } from '../models/Module';
 import { requireAuth } from '../middleware/requireAuth';
 import { breakdownGoal } from '../ai/claude';
+import { postFeedItem } from '../utils/feed';
 
 const router = Router();
 router.use(requireAuth);
@@ -102,6 +103,24 @@ router.patch('/:id', async (req: Request, res: Response) => {
       { returnDocument: 'after' }
     );
     if (!task) return res.status(404).json({ error: 'Task not found' });
+
+    if (task.parentId && parsed.data.status === 'done') {
+      const parentId = task.parentId;
+      const [total, done] = await Promise.all([
+        TaskModel.countDocuments({ parentId }),
+        TaskModel.countDocuments({ parentId, status: 'done' }),
+      ]);
+      if (total > 0 && done === total) {
+        const goal = await TaskModel.findById(parentId);
+        if (goal) {
+          await postFeedItem(req.user!._id.toString(), req.user!.displayName, 'goal-progress', {
+            goalTitle: goal.title,
+            percentage: 100,
+          }).catch(() => {});
+        }
+      }
+    }
+
     return res.json({ task: task.toJSON() });
   } catch {
     return res.status(404).json({ error: 'Task not found' });

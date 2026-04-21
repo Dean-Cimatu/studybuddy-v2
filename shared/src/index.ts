@@ -37,6 +37,10 @@ export type { StudySession, DashboardStats, StudyHistoryDay } from './types/stat
 
 export type { StudyPlan, StudyPlanSession } from './types/planner';
 
+// ── Groups ────────────────────────────────────────────────────────────────────
+
+export type { StudyGroup, GroupMember } from './types/group';
+
 // ── AI / Chat ─────────────────────────────────────────────────────────────────
 
 export type MessageRole = 'user' | 'assistant';

@@ -1,4 +1,5 @@
 import { UserModel } from '../models/User';
+import { postFeedItem } from './feed';
 
 export function getTodayUTC(): string {
   return new Date().toISOString().slice(0, 10);
@@ -58,6 +59,9 @@ export async function checkStreakMilestones(userId: string): Promise<number[]> {
   if (newlyAwarded.length > 0) {
     user.streakMilestonesAwarded = [...awarded, ...newlyAwarded];
     await user.save();
+    for (const milestone of newlyAwarded) {
+      await postFeedItem(userId, user.displayName, 'streak-milestone', { streak: milestone }).catch(() => {});
+    }
   }
 
   return newlyAwarded;
