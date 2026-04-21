@@ -316,15 +316,15 @@ export function SettingsPage() {
           <SectionTitle>Integrations</SectionTitle>
           <div className="space-y-3">
             <GoogleCalendarConnect />
-            <div className="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-600 rounded-lg opacity-50">
+            <div className="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-600 rounded-lg opacity-60">
               <div className="flex items-center gap-3">
                 <span className="text-xl">🃏</span>
                 <div>
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-200">DeckForge</p>
-                  <p className="text-xs text-slate-400">Flashcard sync</p>
+                  <p className="text-xs text-slate-400">Sync your flashcard decks and study with spaced repetition</p>
                 </div>
               </div>
-              <span className="text-xs text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full">Coming soon</span>
+              <span className="text-xs text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full shrink-0">Coming soon</span>
             </div>
           </div>
         </SectionCard>

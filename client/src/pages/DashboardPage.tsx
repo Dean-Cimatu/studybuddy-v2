@@ -166,13 +166,32 @@ export function DashboardPage() {
             {activeTab === 'home' && (
               <div className="space-y-6">
                 <StatsPanel />
-                <div className="flex flex-wrap gap-3">
-                  <Link to="/flashcards" className="btn-secondary px-5 py-2.5">
-                    Flashcards
-                  </Link>
-                  <Link to="/stats" className="btn-secondary px-5 py-2.5">
-                    View Stats
-                  </Link>
+
+                {/* Quick actions */}
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Planner',  icon: '🗓',  action: () => setTab('planner') },
+                    { label: 'Calendar', icon: '📅',  action: () => setTab('calendar') },
+                    { label: 'Stats',    icon: '📊',  href: '/stats' },
+                  ].map(item => item.href ? (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className="card-base p-3 flex flex-col items-center gap-1.5 hover:shadow-md transition-shadow cursor-pointer select-none"
+                    >
+                      <span className="text-2xl">{item.icon}</span>
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{item.label}</span>
+                    </Link>
+                  ) : (
+                    <button
+                      key={item.label}
+                      onClick={item.action}
+                      className="card-base p-3 flex flex-col items-center gap-1.5 hover:shadow-md transition-shadow cursor-pointer select-none w-full"
+                    >
+                      <span className="text-2xl">{item.icon}</span>
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{item.label}</span>
+                    </button>
+                  ))}
                 </div>
                 <WeeklyReport />
                 <Heatmap />

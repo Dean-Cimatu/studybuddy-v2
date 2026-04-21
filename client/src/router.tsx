@@ -4,7 +4,6 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SettingsPage } from './pages/SettingsPage';
-import { FlashcardsPage } from './pages/FlashcardsPage';
 import { StatsPage } from './pages/StatsPage';
 
 export const router = createBrowserRouter([
@@ -32,14 +31,6 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <StatsPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/flashcards',
-    element: (
-      <ProtectedRoute>
-        <FlashcardsPage />
       </ProtectedRoute>
     ),
   },
