@@ -69,6 +69,7 @@ export function TaskCard({ task, isExpanded, onToggle, moduleColour, isSubtask }
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? '');
+  const [dueDate, setDueDate] = useState(task.dueDate ? task.dueDate.slice(0, 10) : '');
   const titleRef = useRef<HTMLInputElement>(null);
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
@@ -81,6 +82,7 @@ export function TaskCard({ task, isExpanded, onToggle, moduleColour, isSubtask }
   function startEdit() {
     setTitle(task.title);
     setDescription(task.description ?? '');
+    setDueDate(task.dueDate ? task.dueDate.slice(0, 10) : '');
     setEditing(true);
   }
 
@@ -94,7 +96,11 @@ export function TaskCard({ task, isExpanded, onToggle, moduleColour, isSubtask }
     setEditing(false);
     await updateTask.mutateAsync({
       id: task.id,
-      input: { title: trimmed, description: description.trim() || undefined },
+      input: {
+        title: trimmed,
+        description: description.trim() || undefined,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+      },
     });
   }
 
@@ -169,7 +175,14 @@ export function TaskCard({ task, isExpanded, onToggle, moduleColour, isSubtask }
             placeholder="Description…"
             className="w-full bg-transparent text-slate-500 text-xs focus:outline-none resize-none placeholder-slate-300"
           />
-          <div className="flex gap-2 pt-1">
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              type="date"
+              value={dueDate}
+              onChange={e => setDueDate(e.target.value)}
+              className="text-xs text-slate-500 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400"
+            />
+            <div className="flex-1" />
             <button onMouseDown={e => { e.preventDefault(); void saveEdit(); }} className="text-xs text-blue-500 hover:text-blue-600">Save</button>
             <button onMouseDown={e => { e.preventDefault(); cancelEdit(); }} className="text-xs text-slate-400 hover:text-slate-600">Cancel</button>
           </div>

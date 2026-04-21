@@ -40,8 +40,8 @@ async function callClaude(prompt: string): Promise<z.infer<typeof rawSessionSche
     .map(b => b.text)
     .join('');
 
-  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/);
-  const jsonStr = jsonMatch ? jsonMatch[1] : text.trim();
+  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) ?? text.match(/(\[[\s\S]*\])/);
+  const jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
   const raw: unknown = JSON.parse(jsonStr);
   if (!Array.isArray(raw)) throw new Error('Expected JSON array');
   return raw.map(item => rawSessionSchema.parse(item));
@@ -92,7 +92,41 @@ export async function generateWeeklyPlan(userId: string, pushToGoogleCalendar = 
     return `- ${m.name} (${m.fullName}): topics: [${m.topics.join(', ') || 'general'}]${upcomingDeadlines ? `, deadlines: ${upcomingDeadlines}` : ''}${m.language !== 'en' ? `, language: ${m.language}` : ''}`;
   }).join('\n');
 
-  const prompt = `Generate a weekly study plan. Modules:\n${moduleList || '- No modules specified, generate general study sessions'}\n\nBusy times: ${busyTimes}\nGoal: ${user.studyGoalHours ?? 15} hours this week. Session length: ${user.preferredSessionLength ?? 25} min. Preferred time: ${user.preferredStudyTime ?? 'no-preference'}.\n\nRules: don't schedule over busy times, prioritise closest deadlines, distribute evenly across the week (Mon=0 to Sun=6), use the module topics to suggest specific study activities for each session. If a module has a language set, generate the topic/activity in that language. Hours should be between 8 and 22.\n\nReturn ONLY a valid JSON array (no fences) of: { "dayOfWeek": number, "startHour": number, "durationMinutes": number, "moduleName": string, "topic": string }`;
+  const studyTime = user.preferredStudyTime ?? 'no-preference';
+  const timeWindow = studyTime === 'morning'
+    ? 'between 8am and 12pm (hours 8–11)'
+    : studyTime === 'afternoon'
+    ? 'between 12pm and 6pm (hours 12–17)'
+    : studyTime === 'evening'
+    ? 'between 6pm and 10pm (hours 18–21)'
+    : 'spread across the day (any hour 8–21), varying times so not all sessions are at the same time';
+
+  const sessionMins = user.preferredSessionLength ?? 50;
+  const goalHours = user.studyGoalHours ?? 15;
+  const sessionsNeeded = Math.ceil((goalHours * 60) / sessionMins);
+  const maxPerDay = Math.min(3, Math.ceil(sessionsNeeded / 5));
+
+  const prompt = `You are a smart study planner. Generate a realistic, human-feeling weekly study schedule.
+
+MODULES:
+${moduleList || '- No modules specified, generate general study sessions'}
+
+CONSTRAINTS:
+- Week: Mon (dayOfWeek=0) to Sun (dayOfWeek=6)
+- Goal: ~${goalHours} hours total (approx ${sessionsNeeded} sessions of ${sessionMins} min each)
+- Session duration: ${sessionMins} minutes each
+- Preferred study time: ${timeWindow}
+- Max sessions per day: ${maxPerDay} (do NOT schedule 3 consecutive sessions every single day — spread them realistically)
+- Busy/occupied times: ${busyTimes} — do NOT schedule over these
+- Leave at least 1 rest day (typically Saturday or Sunday with fewer/no sessions)
+- Vary start times slightly day to day (e.g. 9am one day, 10am the next) — avoid identical schedules every day
+- Prioritise modules with the nearest upcoming deadlines
+- Use specific topics from the module topic lists for each session — no generic sessions
+- If a module has a language set, write the topic in that language
+- Hours must be integers between 8 and 21
+
+Return ONLY a valid JSON array, no markdown fences, no explanation:
+[{ "dayOfWeek": number, "startHour": number, "durationMinutes": number, "moduleName": string, "topic": string }, ...]`;
 
   let rawSessions: z.infer<typeof rawSessionSchema>[];
   try {
