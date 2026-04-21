@@ -269,7 +269,8 @@ function ModuleCard({ module }: { module: Module }) {
   const deleteDeadline = useDeleteDeadline();
 
   return (
-    <div className="card-base p-4 relative group" style={{ borderLeft: `4px solid ${module.colour}` }}>
+    <div className="card-base pl-5 p-4 relative group overflow-hidden">
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: module.colour }} />
       {/* Action buttons — visible on hover */}
       <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
