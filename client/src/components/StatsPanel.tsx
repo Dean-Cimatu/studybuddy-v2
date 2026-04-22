@@ -42,13 +42,6 @@ function CheckIcon() {
   );
 }
 
-function TrophyIcon() {
-  return (
-    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-    </svg>
-  );
-}
 
 function StatCard({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -106,13 +99,13 @@ export function StatsPanel() {
     <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard icon={<ClockIcon />} label="Study Today">
-          <p className="text-2xl font-bold text-slate-800">{formatMinutes(data.studyMinutesToday)}</p>
+          <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatMinutes(data.studyMinutesToday)}</p>
         </StatCard>
 
         <StatCard icon={<ChartIcon />} label="This Week">
-          <p className="text-2xl font-bold text-slate-800">{formatMinutes(data.studyMinutesThisWeek)}</p>
+          <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatMinutes(data.studyMinutesThisWeek)}</p>
           <p className="text-xs text-slate-400 mt-0.5">/ {data.weeklyGoalHours}h goal</p>
-          <div className="h-1 rounded-full bg-slate-100 mt-1.5 overflow-hidden">
+          <div className="h-1 rounded-full bg-slate-100 dark:bg-slate-700 mt-1.5 overflow-hidden">
             <div
               className="h-full rounded-full bg-blue-500 transition-all duration-500"
               style={{ width: `${Math.min(100, data.weeklyGoalProgress)}%` }}
@@ -125,12 +118,12 @@ export function StatsPanel() {
           <p className="flex items-center gap-1.5 text-xs text-slate-500 uppercase tracking-wide mb-1">
             <FlameIcon /> Streak
           </p>
-          <p className="text-2xl font-bold text-slate-800">{data.currentStreak}</p>
+          <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{data.currentStreak}</p>
           <p className="text-xs text-slate-400">days · best {data.longestStreak}</p>
         </div>
 
         <StatCard icon={<CheckIcon />} label="Tasks Today">
-          <p className="text-2xl font-bold text-slate-800">{data.tasksCompletedToday}</p>
+          <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{data.tasksCompletedToday}</p>
           <p className="text-xs text-slate-400 mt-0.5">{data.tasksCompletedThisWeek} this week</p>
         </StatCard>
       </div>

@@ -37,7 +37,7 @@ function ReviewMode({ cards, onDone }: { cards: FlashcardCard[]; onDone: () => v
   }
 
   const dueDate = new Date(card.due);
-  const isOverdue = dueDate < new Date();
+  const _isOverdue = dueDate < new Date();
 
   return (
     <div className="max-w-xl mx-auto">

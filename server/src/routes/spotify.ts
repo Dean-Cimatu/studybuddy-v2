@@ -43,7 +43,8 @@ router.get('/now-playing', async (req: Request, res: Response) => {
   }
 
   try {
-    let { accessToken, expiresAt } = user.spotifyTokens;
+    const { expiresAt } = user.spotifyTokens;
+    let { accessToken } = user.spotifyTokens;
     if (!accessToken || (expiresAt && Date.now() > expiresAt - 60_000)) {
       const refreshed = await refreshSpotifyToken(user.spotifyTokens.refreshToken!);
       accessToken = refreshed.accessToken;

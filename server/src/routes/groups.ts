@@ -91,7 +91,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       .map(async u => {
         const uid = u._id.toString();
         try {
-          let { accessToken, expiresAt } = u.spotifyTokens;
+          const { expiresAt } = u.spotifyTokens;
+          let { accessToken } = u.spotifyTokens;
           if (!accessToken || (expiresAt && Date.now() > expiresAt - 60_000)) {
             const refreshed = await refreshSpotifyToken(u.spotifyTokens.refreshToken!);
             await UserModel.findByIdAndUpdate(uid, {

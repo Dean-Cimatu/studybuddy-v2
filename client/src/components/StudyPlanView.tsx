@@ -22,7 +22,7 @@ function fmtDuration(min: number): string {
   return h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
 }
 
-function getWeekStartDate(): string {
+function _getWeekStartDate(): string {
   const now = new Date();
   const dow = now.getDay();
   const diff = dow === 0 ? -6 : 1 - dow;
