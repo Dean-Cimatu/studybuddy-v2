@@ -288,7 +288,7 @@ export function Calendar() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(TODAY);
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { data: modules = [] } = useModules();
