@@ -201,6 +201,56 @@ router.delete('/:id', async (req: Request, res: Response) => {
   return res.json({ deleted: true });
 });
 
+// POST /api/groups/:id/challenge
+router.post('/:id/challenge', async (req: Request, res: Response) => {
+  const userId = req.user!._id;
+  let group;
+  try {
+    group = await StudyGroupModel.findById(req.params['id']);
+  } catch {
+    return res.status(404).json({ error: 'Group not found' });
+  }
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+
+  const isMember = group.members.some(m => m.userId.toString() === userId.toString());
+  if (!isMember) return res.status(403).json({ error: 'Not a member of this group' });
+
+  const { targetHours, title } = req.body as { targetHours?: unknown; title?: unknown };
+  if (typeof targetHours !== 'number' || targetHours < 1 || targetHours > 168) {
+    return res.status(400).json({ error: 'targetHours must be between 1 and 168' });
+  }
+
+  const weekStart = getWeekStartUTC().toISOString().slice(0, 10);
+  group.challenge = {
+    targetHours,
+    title: typeof title === 'string' ? title.trim().slice(0, 80) : '',
+    weekStart,
+    createdBy: userId,
+    createdAt: new Date(),
+  };
+  await group.save();
+  return res.json({ group: group.toJSON() });
+});
+
+// DELETE /api/groups/:id/challenge
+router.delete('/:id/challenge', async (req: Request, res: Response) => {
+  const userId = req.user!._id;
+  let group;
+  try {
+    group = await StudyGroupModel.findById(req.params['id']);
+  } catch {
+    return res.status(404).json({ error: 'Group not found' });
+  }
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+
+  const isMember = group.members.some(m => m.userId.toString() === userId.toString());
+  if (!isMember) return res.status(403).json({ error: 'Not a member of this group' });
+
+  group.challenge = null;
+  await group.save();
+  return res.json({ cleared: true });
+});
+
 // GET /api/groups/:id/feed
 router.get('/:id/feed', async (req: Request, res: Response) => {
   const userId = req.user!._id;

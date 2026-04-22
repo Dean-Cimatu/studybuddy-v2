@@ -47,7 +47,7 @@ export type { StudyPlan, StudyPlanSession } from './types/planner';
 
 // ── Groups ────────────────────────────────────────────────────────────────────
 
-export type { StudyGroup, GroupMember } from './types/group';
+export type { StudyGroup, GroupMember, GroupChallenge } from './types/group';
 
 // ── Achievements ──────────────────────────────────────────────────────────────
 

@@ -15,6 +15,7 @@ import { Calendar } from '../components/Calendar';
 import { GroupList } from '../components/GroupList';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { GroupMemberStatus } from '../components/GroupMemberStatus';
+import { GroupChallengePanel } from '../components/GroupChallenge';
 import { OnboardingModal } from '../components/OnboardingModal';
 import type { Module, ModuleDeadline } from '@studybuddy/shared';
 
@@ -185,21 +186,33 @@ export function DashboardPage() {
 
                 {/* Main panel */}
                 {selectedGroupId ? (
-                  <div className="flex-1 min-w-0 flex gap-4">
-                    {/* Leaderboard */}
-                    <div className="w-72 shrink-0 card-base p-4">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">This week</p>
-                      <GroupMemberStatus groupId={selectedGroupId} />
-                    </div>
-                    {/* Activity feed */}
-                    <div className="flex-1 min-w-0 card-base p-4">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Activity</p>
-                      <ActivityFeed groupId={selectedGroupId} />
+                  <div className="flex-1 min-w-0 space-y-4">
+                    {/* Challenge banner */}
+                    <GroupChallengePanel groupId={selectedGroupId} />
+
+                    {/* Leaderboard + Feed */}
+                    <div className="flex gap-4">
+                      <div className="w-72 shrink-0 rounded-xl bg-slate-800/30 border border-slate-700/40 p-4">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Leaderboard</p>
+                        <GroupMemberStatus groupId={selectedGroupId} />
+                      </div>
+                      <div className="flex-1 min-w-0 rounded-xl bg-slate-800/30 border border-slate-700/40 overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-700/40">
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Activity</p>
+                        </div>
+                        <ActivityFeed groupId={selectedGroupId} />
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 card-base flex items-center justify-center text-slate-500 text-sm">
-                    Select a group to see activity
+                  <div className="flex-1 rounded-xl bg-slate-800/20 border border-slate-700/40 flex flex-col items-center justify-center gap-2 text-center p-8">
+                    <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-1">
+                      <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-medium text-slate-400">Select a group</p>
+                    <p className="text-xs text-slate-600">Pick a group from the sidebar to see activity and set challenges</p>
                   </div>
                 )}
               </div>

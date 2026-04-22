@@ -110,6 +110,32 @@ export function useReactToFeedItem() {
   });
 }
 
+export function useSetChallenge() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ groupId, targetHours, title }: { groupId: string; targetHours: number; title?: string }) =>
+      apiFetch<{ group: StudyGroup }>(`/api/groups/${groupId}/challenge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetHours, title }),
+      }).then(d => d.group),
+    onSuccess: (_data, { groupId }) => {
+      queryClient.invalidateQueries({ queryKey: ['group', groupId] });
+    },
+  });
+}
+
+export function useClearChallenge() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (groupId: string) =>
+      apiFetch<{ cleared: boolean }>(`/api/groups/${groupId}/challenge`, { method: 'DELETE' }),
+    onSuccess: (_data, groupId) => {
+      queryClient.invalidateQueries({ queryKey: ['group', groupId] });
+    },
+  });
+}
+
 export function useSpotifyConnect() {
   return useMutation({
     mutationFn: () => {
