@@ -45,7 +45,8 @@ router.post('/register', async (req: Request, res: Response) => {
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' });
   }
 
-  const { email, password, displayName } = parsed.data;
+  const { email: rawEmail, password, displayName } = parsed.data;
+  const email = rawEmail.toLowerCase().trim();
 
   try {
     const existing = await UserModel.findOne({ email });
@@ -58,7 +59,10 @@ router.post('/register', async (req: Request, res: Response) => {
 
     setAuthCookie(res, signToken(user.id as string));
     return res.status(201).json({ user: user.toJSON() });
-  } catch (err) {
+  } catch (err: unknown) {
+    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: unknown }).code === 11000) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
     console.error('Register error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
@@ -71,7 +75,8 @@ router.post('/login', async (req: Request, res: Response) => {
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' });
   }
 
-  const { email, password } = parsed.data;
+  const { email: rawEmail, password } = parsed.data;
+  const email = rawEmail.toLowerCase().trim();
 
   try {
     const user = await UserModel.findOne({ email });

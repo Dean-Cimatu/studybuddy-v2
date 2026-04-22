@@ -1,4 +1,13 @@
 services:
+  - type: cron
+    name: studybuddy-keep-alive
+    runtime: node
+    plan: free
+    region: oregon
+    schedule: "*/10 * * * *"
+    buildCommand: echo "keep-alive"
+    startCommand: node -e "fetch('https://studybuddy-v2.onrender.com/api/health').then(r=>console.log('ping',r.status)).catch(console.error)"
+
   - type: web
     name: studybuddy-v2
     runtime: docker
