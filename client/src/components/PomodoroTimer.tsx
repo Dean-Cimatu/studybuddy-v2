@@ -302,7 +302,7 @@ export function PomodoroTimer() {
         {countdown !== null ? (
           <div className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700">
             <span className="text-blue-600 dark:text-blue-400 text-xs font-medium">Starting in</span>
-            <span className="font-bold text-lg tabular-nums text-blue-600 dark:text-blue-400 w-4 text-center">{countdown}</span>
+            <span className="font-bold text-lg tabular-nums text-blue-600 dark:text-blue-400 inline-block w-5 text-center">{countdown}</span>
             <button
               onClick={() => { setCountdown(null); pendingModuleRef.current = null; }}
               className="text-slate-400 hover:text-red-400 transition-colors ml-1"
@@ -512,9 +512,11 @@ export function PomodoroTimer() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950">
           <div className="text-center">
             <p className="text-slate-400 text-sm uppercase tracking-widest mb-6">Get ready</p>
-            <p className="font-bold text-white tabular-nums" style={{ fontSize: '10rem', lineHeight: 1 }}>
-              {countdown === 0 ? 'Go' : countdown}
-            </p>
+            <div style={{ width: '12rem', height: '12rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="font-bold text-white tabular-nums" style={{ fontSize: '10rem', lineHeight: 1 }}>
+                {countdown === 0 ? 'Go' : countdown}
+              </span>
+            </div>
             <button
               onClick={() => { setCountdown(null); pendingModuleRef.current = null; }}
               className="mt-12 text-slate-500 hover:text-slate-300 text-sm transition-colors"

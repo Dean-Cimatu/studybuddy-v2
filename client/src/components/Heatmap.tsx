@@ -10,12 +10,14 @@ const CELL = 12;
 const GAP = 2;
 const STEP = CELL + GAP;
 
-function squareColor(minutes: number, isInFuture: boolean): string {
-  if (isInFuture) return 'bg-slate-50';
-  if (minutes === 0) return 'bg-slate-100';
-  if (minutes < 30) return 'bg-emerald-200';
-  if (minutes < 60) return 'bg-emerald-400';
-  if (minutes < 120) return 'bg-emerald-500';
+function squareColor(minutes: number, isInFuture: boolean, maxMinutes: number): string {
+  if (isInFuture) return 'bg-slate-50 dark:bg-slate-800/40';
+  if (minutes === 0) return 'bg-slate-100 dark:bg-slate-800';
+  if (maxMinutes === 0) return 'bg-emerald-200';
+  const ratio = minutes / maxMinutes;
+  if (ratio < 0.25) return 'bg-emerald-200';
+  if (ratio < 0.5) return 'bg-emerald-400';
+  if (ratio < 0.75) return 'bg-emerald-500';
   return 'bg-emerald-700';
 }
 
@@ -81,7 +83,7 @@ function buildGrid(rawDays: StudyHistoryDay[], createdAt?: string) {
   return { weeks, monthLabels };
 }
 
-function HeatCell({ date, minutes, isInFuture }: { date: string; minutes: number; isInFuture: boolean }) {
+function HeatCell({ date, minutes, isInFuture, maxMinutes }: { date: string; minutes: number; isInFuture: boolean; maxMinutes: number }) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const cellRef = useRef<HTMLDivElement>(null);
   const formatted = new Date(date + 'T12:00:00').toLocaleDateString('en-GB', {
@@ -97,7 +99,7 @@ function HeatCell({ date, minutes, isInFuture }: { date: string; minutes: number
   return (
     <div ref={cellRef} onMouseEnter={handleEnter} onMouseLeave={() => setPos(null)}>
       <div
-        className={`rounded-sm cursor-default ${squareColor(minutes, isInFuture)} ${isInFuture ? 'opacity-40' : 'hover:opacity-75'}`}
+        className={`rounded-sm cursor-default ${squareColor(minutes, isInFuture, maxMinutes)} ${isInFuture ? 'opacity-40' : 'hover:opacity-75'}`}
         style={{ width: CELL, height: CELL }}
       />
       {pos && createPortal(
@@ -144,6 +146,7 @@ export function Heatmap() {
 
   const { weeks, monthLabels } = buildGrid(data ?? [], createdAt);
   const cells = weeks.flat();
+  const maxMinutes = Math.max(0, ...cells.filter(d => !d.isInFuture).map(d => d.minutes));
   const activeDays = cells.filter(d => d.minutes > 0 && !d.isInFuture).length;
   const totalMinutes = cells.reduce((acc, d) => acc + d.minutes, 0);
   const h = Math.floor(totalMinutes / 60);
@@ -190,7 +193,7 @@ export function Heatmap() {
             <div className="flex" style={{ gap: GAP }}>
               {weeks.map((week, w) => (
                 <div key={w} className="flex flex-col" style={{ gap: GAP }}>
-                  {week.map(cell => <HeatCell key={cell.date} {...cell} />)}
+                  {week.map(cell => <HeatCell key={cell.date} {...cell} maxMinutes={maxMinutes} />)}
                 </div>
               ))}
             </div>
