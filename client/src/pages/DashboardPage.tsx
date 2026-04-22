@@ -16,6 +16,7 @@ import { GroupList } from '../components/GroupList';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { GroupMemberStatus } from '../components/GroupMemberStatus';
 import { GroupChallengePanel } from '../components/GroupChallenge';
+import { useGroups } from '../hooks/useGroups';
 import { OnboardingModal } from '../components/OnboardingModal';
 import type { Module, ModuleDeadline } from '@studybuddy/shared';
 
@@ -23,7 +24,7 @@ const TABS = [
   { id: 'home', label: 'Home' },
   { id: 'planner', label: 'Planner' },
   { id: 'calendar', label: 'Calendar' },
-  { id: 'social', label: 'Social' },
+  { id: 'social', label: 'Groups' },
 ];
 
 function UpcomingDeadlines({ modules }: { modules: Module[] }) {
@@ -76,9 +77,17 @@ export function DashboardPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileTasksOpen, setMobileTasksOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [challengeOpen, setChallengeOpen] = useState(false);
+
+  function selectGroup(id: string | null) {
+    setSelectedGroupId(id);
+    setChallengeOpen(false);
+  }
 
   const { data: modules = [], isLoading: modulesLoading } = useModules();
   const { data: stats } = useDashboardStats();
+  const { data: groups = [] } = useGroups();
+  const selectedGroup = groups.find(g => g._id === selectedGroupId) ?? null;
 
   const rawTab = searchParams.get('tab') ?? 'home';
   const activeTab = TABS.some(t => t.id === rawTab) ? rawTab : 'home';
@@ -181,14 +190,39 @@ export function DashboardPage() {
               <div className="flex gap-4 min-h-[520px]">
                 {/* Sidebar */}
                 <div className="w-48 shrink-0 card-base py-3">
-                  <GroupList selectedGroupId={selectedGroupId} onSelectGroup={setSelectedGroupId} />
+                  <GroupList selectedGroupId={selectedGroupId} onSelectGroup={selectGroup} />
                 </div>
 
                 {/* Main panel */}
                 {selectedGroupId ? (
                   <div className="flex-1 min-w-0 space-y-4">
-                    {/* Challenge banner */}
-                    <GroupChallengePanel groupId={selectedGroupId} />
+                    {/* Group header */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-base font-semibold text-slate-100">{selectedGroup?.name ?? ''}</h2>
+                        <p className="text-xs text-slate-500">{selectedGroup?.members.length ?? 0} members</p>
+                      </div>
+                      <button
+                        onClick={() => setChallengeOpen(v => !v)}
+                        className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                          challengeOpen
+                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                            : 'bg-slate-700/60 text-slate-300 hover:bg-slate-700 border border-slate-600/40'
+                        }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
+                        </svg>
+                        Challenge
+                      </button>
+                    </div>
+
+                    {/* Challenge panel */}
+                    <GroupChallengePanel
+                      groupId={selectedGroupId}
+                      initialOpen={challengeOpen}
+                      onFormClose={() => setChallengeOpen(false)}
+                    />
 
                     {/* Leaderboard + Feed */}
                     <div className="flex gap-4">

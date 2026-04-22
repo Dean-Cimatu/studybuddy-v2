@@ -4,6 +4,8 @@ import type { GroupChallenge } from '@studybuddy/shared';
 
 interface GroupChallengeProps {
   groupId: string;
+  initialOpen?: boolean;
+  onFormClose?: () => void;
 }
 
 function currentWeekStart(): string {
@@ -91,10 +93,15 @@ function SetChallengeForm({ groupId, existing, onClose }: {
   );
 }
 
-export function GroupChallengePanel({ groupId }: GroupChallengeProps) {
+export function GroupChallengePanel({ groupId, initialOpen = false, onFormClose }: GroupChallengeProps) {
   const { data } = useGroup(groupId);
   const clearChallenge = useClearChallenge();
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(initialOpen);
+
+  function closeForm() {
+    setShowForm(false);
+    onFormClose?.();
+  }
 
   if (!data) return null;
 
@@ -123,7 +130,7 @@ export function GroupChallengePanel({ groupId }: GroupChallengeProps) {
             + Set one
           </button>
         </div>
-        {showForm && <SetChallengeForm groupId={groupId} onClose={() => setShowForm(false)} />}
+        {showForm && <SetChallengeForm groupId={groupId} onClose={closeForm} />}
       </div>
     );
   }
@@ -208,7 +215,7 @@ export function GroupChallengePanel({ groupId }: GroupChallengeProps) {
       </div>
 
       {showForm && (
-        <SetChallengeForm groupId={groupId} existing={challenge} onClose={() => setShowForm(false)} />
+        <SetChallengeForm groupId={groupId} existing={challenge} onClose={closeForm} />
       )}
     </div>
   );
