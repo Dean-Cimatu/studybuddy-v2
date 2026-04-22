@@ -7,6 +7,7 @@ import { UserModel } from '../models/User';
 import { StudySessionModel } from '../models/StudySession';
 import { getWeekStartUTC } from '../utils/studyStats';
 import { awardAchievement } from '../utils/achievements';
+import { refreshSpotifyToken, getNowPlaying, type SpotifyTrack } from '../services/spotify';
 
 const router = Router();
 router.use(requireAuth);
@@ -59,10 +60,12 @@ router.get('/:id', async (req: Request, res: Response) => {
 
   const memberUserIds = group.members.map(m => m.userId);
   const weekStart = getWeekStartUTC();
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
-  const [weekSessions, users] = await Promise.all([
+  const [weekSessions, recentSessions, users] = await Promise.all([
     StudySessionModel.find({ userId: { $in: memberUserIds }, startTime: { $gte: weekStart } }),
-    UserModel.find({ _id: { $in: memberUserIds } }, { streak: 1 }),
+    StudySessionModel.find({ userId: { $in: memberUserIds }, startTime: { $gte: twoHoursAgo } }).sort({ startTime: -1 }),
+    UserModel.find({ _id: { $in: memberUserIds } }, { streak: 1, spotifyConnected: 1, spotifyTokens: 1 }),
   ]);
 
   const minutesByUser: Record<string, number> = {};
@@ -71,13 +74,56 @@ router.get('/:id', async (req: Request, res: Response) => {
     minutesByUser[uid] = (minutesByUser[uid] ?? 0) + s.durationMinutes;
   }
 
-  const memberStats: Record<string, { hoursThisWeek: number; streak: number }> = {};
+  const recentByUser = new Set(recentSessions.map(s => s.userId.toString()));
+  const recentModuleByUser: Record<string, string | null> = {};
+  for (const s of recentSessions) {
+    const uid = s.userId.toString();
+    if (!recentModuleByUser[uid]) {
+      recentModuleByUser[uid] = s.moduleName ?? null;
+    }
+  }
+
+  // Fetch Spotify now-playing for connected members in parallel
+  const nowPlayingMap: Record<string, SpotifyTrack | null> = {};
+  await Promise.allSettled(
+    users
+      .filter(u => u.spotifyConnected && u.spotifyTokens.refreshToken)
+      .map(async u => {
+        const uid = u._id.toString();
+        try {
+          let { accessToken, expiresAt } = u.spotifyTokens;
+          if (!accessToken || (expiresAt && Date.now() > expiresAt - 60_000)) {
+            const refreshed = await refreshSpotifyToken(u.spotifyTokens.refreshToken!);
+            await UserModel.findByIdAndUpdate(uid, {
+              'spotifyTokens.accessToken': refreshed.accessToken,
+              'spotifyTokens.expiresAt': refreshed.expiresAt,
+            });
+            accessToken = refreshed.accessToken;
+          }
+          nowPlayingMap[uid] = await getNowPlaying(accessToken!);
+        } catch {
+          nowPlayingMap[uid] = null;
+        }
+      })
+  );
+
+  const memberStats: Record<string, {
+    hoursThisWeek: number;
+    streak: number;
+    recentlyStudied: boolean;
+    currentModule: string | null;
+    nowPlaying: SpotifyTrack | null;
+  }> = {};
+
   for (const m of group.members) {
     const uid = m.userId.toString();
     const user = users.find(u => u._id.toString() === uid);
     memberStats[uid] = {
       hoursThisWeek: Math.round(((minutesByUser[uid] ?? 0) / 60) * 10) / 10,
       streak: user?.streak ?? 0,
+      recentlyStudied: recentByUser.has(uid),
+      currentModule: recentModuleByUser[uid] ?? null,
+      nowPlaying: nowPlayingMap[uid] ?? null,
     };
   }
 

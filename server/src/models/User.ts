@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import type { User } from '@studybuddy/shared';
 
-export interface GoogleTokens {
+export interface OAuthTokens {
   accessToken: string | null;
   refreshToken: string | null;
   expiresAt: number | null;
@@ -9,7 +9,9 @@ export interface GoogleTokens {
 
 export interface UserDocument extends Omit<User, 'id' | 'createdAt'>, Document {
   passwordHash: string;
-  googleTokens: GoogleTokens;
+  googleTokens: OAuthTokens;
+  spotifyTokens: OAuthTokens;
+  spotifyConnected: boolean;
   university: string;
   yearOfStudy: string;
   bio: string;
@@ -41,6 +43,12 @@ const userSchema = new Schema<UserDocument>(
     themeAccent: { type: String, enum: ['blue', 'green', 'purple', 'amber'], default: 'blue' },
     googleCalendarConnected: { type: Boolean, default: false },
     googleTokens: {
+      accessToken: { type: String, default: null },
+      refreshToken: { type: String, default: null },
+      expiresAt: { type: Number, default: null },
+    },
+    spotifyConnected: { type: Boolean, default: false },
+    spotifyTokens: {
       accessToken: { type: String, default: null },
       refreshToken: { type: String, default: null },
       expiresAt: { type: Number, default: null },

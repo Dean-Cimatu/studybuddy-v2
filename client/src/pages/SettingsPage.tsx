@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { GoogleCalendarConnect } from '../components/GoogleCalendarConnect';
+import { SpotifyConnect } from '../components/SpotifyConnect';
 import { AchievementBadge } from '../components/AchievementBadge';
 import { ModuleList } from '../components/ModuleList';
 import { ACHIEVEMENTS } from '@studybuddy/shared';
@@ -337,8 +338,11 @@ export function SettingsPage() {
         {/* ── Integrations ── */}
         <SectionCard>
           <SectionTitle>Integrations</SectionTitle>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <GoogleCalendarConnect />
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+              <SpotifyConnect />
+            </div>
           </div>
         </SectionCard>
 

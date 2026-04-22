@@ -11,9 +11,20 @@ export interface FeedItem {
   createdAt: string;
 }
 
+export interface SpotifyTrack {
+  isPlaying: boolean;
+  trackName: string;
+  artistName: string;
+  albumArtUrl: string | null;
+  trackUrl: string;
+}
+
 export interface MemberStats {
   hoursThisWeek: number;
   streak: number;
+  recentlyStudied: boolean;
+  currentModule: string | null;
+  nowPlaying: SpotifyTrack | null;
 }
 
 async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -96,5 +107,22 @@ export function useReactToFeedItem() {
     onSuccess: (_data, { groupId }) => {
       queryClient.invalidateQueries({ queryKey: ['group-feed', groupId] });
     },
+  });
+}
+
+export function useSpotifyConnect() {
+  return useMutation({
+    mutationFn: () => {
+      window.location.href = '/api/spotify/connect';
+      return Promise.resolve();
+    },
+  });
+}
+
+export function useSpotifyDisconnect() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch<{ disconnected: boolean }>('/api/spotify/disconnect', { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['me'] }),
   });
 }
