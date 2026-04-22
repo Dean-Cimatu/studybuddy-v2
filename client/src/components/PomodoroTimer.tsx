@@ -166,6 +166,27 @@ export function PomodoroTimer() {
     setCountdown(3);
   }
 
+  function handleEndSession() {
+    if (!timer.isBreak && (timer.isRunning || timer.isPaused)) {
+      const elapsed = workSecs - timer.timeRemaining;
+      const durationMinutes = Math.floor(elapsed / 60);
+      if (durationMinutes >= 1) {
+        const endTime = new Date().toISOString();
+        const startTime = sessionStartRef.current ?? new Date(Date.now() - elapsed * 1000).toISOString();
+        logSession.mutate({
+          startTime, endTime, durationMinutes, type: 'pomodoro',
+          moduleTag: timer.moduleTag ?? undefined,
+          moduleName: timer.moduleName ?? undefined,
+          notes: notesRef.current || undefined,
+        });
+        setLogged(true);
+        setTimeout(() => setLogged(false), 2000);
+      }
+    }
+    timer.reset();
+    setFocusMode(false);
+  }
+
   function handleSaveSettings() {
     const s: PomodoroSettings = {
       workMinutes:        clamp(draftWork, 1, 120),
@@ -250,7 +271,7 @@ export function PomodoroTimer() {
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
         </button>
-        <button onClick={timer.reset} className="text-slate-400 hover:text-red-400 transition-colors p-0.5" title="End session">
+        <button onClick={handleEndSession} className="text-slate-400 hover:text-red-400 transition-colors p-0.5" title="End session">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -324,7 +345,7 @@ export function PomodoroTimer() {
               </svg>
             </button>
             <button
-              onClick={timer.reset}
+              onClick={handleEndSession}
               className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
               title="End session"
             >
@@ -353,7 +374,7 @@ export function PomodoroTimer() {
               </svg>
             </button>
             <button
-              onClick={timer.reset}
+              onClick={handleEndSession}
               className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
               title="End session"
             >
@@ -567,7 +588,7 @@ export function PomodoroTimer() {
                 Pause / Exit
               </button>
               <button
-                onClick={() => { timer.reset(); setFocusMode(false); }}
+                onClick={handleEndSession}
                 className="flex items-center gap-2 px-6 py-3 rounded-full bg-red-900/40 hover:bg-red-900/60 text-red-400 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
