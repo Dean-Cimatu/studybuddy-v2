@@ -58,7 +58,7 @@ export function GroupMemberStatus({ groupId }: GroupMemberStatusProps) {
                   <span className="text-sm text-slate-200 font-medium truncate">{member.name}</span>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
                     {member.stats.streak > 0 && (
-                      <span className="text-xs text-orange-400">🔥{member.stats.streak}</span>
+                      <span className="text-xs text-orange-400">{member.stats.streak}d streak</span>
                     )}
                     <span className="text-xs text-slate-400 tabular-nums">
                       {member.stats.hoursThisWeek > 0 ? `${member.stats.hoursThisWeek}h` : '—'}

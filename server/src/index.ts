@@ -53,7 +53,7 @@ connect()
     }
 
     app.listen(PORT, () => {
-      console.log(`✅ StudyBuddy v2 server running at http://localhost:${PORT}`);
+      console.log(`StudyBuddy v2 server running at http://localhost:${PORT}`);
     });
   })
   .catch((err) => {

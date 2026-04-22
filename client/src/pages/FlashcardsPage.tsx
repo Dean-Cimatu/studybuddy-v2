@@ -22,7 +22,6 @@ function ReviewMode({ cards, onDone }: { cards: FlashcardCard[]; onDone: () => v
   if (!card || reviewed === cards.length) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <div className="text-6xl">🎉</div>
         <h2 className="text-xl font-bold text-slate-800">Session complete!</h2>
         <p className="text-slate-500">You reviewed {reviewed} card{reviewed !== 1 ? 's' : ''}.</p>
         <button onClick={onDone} className="btn-primary px-6 py-2">Back to decks</button>
@@ -297,7 +296,6 @@ export function FlashcardsPage() {
           </div>
         ) : decks.length === 0 ? (
           <div className="card-base p-10 text-center">
-            <p className="text-4xl mb-3">🃏</p>
             <p className="text-slate-600 font-medium mb-1">No decks yet</p>
             <p className="text-sm text-slate-400">Create a deck to start building your flashcard collection.</p>
           </div>
