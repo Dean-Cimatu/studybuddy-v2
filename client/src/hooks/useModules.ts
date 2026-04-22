@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Module } from '@studybuddy/shared';
+import type { Module, ModuleResource, CommunityModuleData } from '@studybuddy/shared';
 
 export type { Module };
 
@@ -8,11 +8,16 @@ export interface CreateModuleInput {
   fullName?: string;
   colour?: string;
   language?: string;
+  university?: string;
   topics?: string[];
   weeklyTargetHours?: number;
 }
 
-export type UpdateModuleInput = Partial<CreateModuleInput> & { notes?: string | null; archived?: boolean };
+export type UpdateModuleInput = Partial<CreateModuleInput> & {
+  notes?: string | null;
+  archived?: boolean;
+  shareWithCommunity?: boolean;
+};
 
 export interface CreateDeadlineInput {
   title: string;
@@ -159,5 +164,48 @@ export function useUpdateTopicProgress() {
         body: JSON.stringify({ topic, confidence }),
       }).then(d => d.module),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: MODULES_KEY }),
+  });
+}
+
+export interface CreateResourceInput {
+  type: ModuleResource['type'];
+  title: string;
+  url: string;
+}
+
+export function useAddResource() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ moduleId, input }: { moduleId: string; input: CreateResourceInput }) =>
+      apiFetch<{ module: Module }>(`/api/modules/${moduleId}/resource`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      }).then(d => d.module),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MODULES_KEY }),
+  });
+}
+
+export function useDeleteResource() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ moduleId, resourceId }: { moduleId: string; resourceId: string }) =>
+      apiFetch<{ module: Module }>(`/api/modules/${moduleId}/resource/${resourceId}`, {
+        method: 'DELETE',
+      }).then(d => d.module),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MODULES_KEY }),
+  });
+}
+
+export function useCommunityModule(university: string, code: string) {
+  const enabled = university.trim().length > 0 && code.trim().length > 0;
+  return useQuery<CommunityModuleData>({
+    queryKey: ['community-module', university.trim().toLowerCase(), code.trim().toLowerCase()],
+    queryFn: () =>
+      apiFetch<CommunityModuleData>(
+        `/api/modules/community?university=${encodeURIComponent(university.trim())}&code=${encodeURIComponent(code.trim())}`
+      ),
+    enabled,
+    staleTime: 2 * 60 * 1000,
   });
 }

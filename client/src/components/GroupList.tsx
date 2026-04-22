@@ -3,6 +3,82 @@ import { useGroups, useCreateGroup, useJoinGroup, useLeaveGroup } from '../hooks
 import { useToast } from '../contexts/ToastContext';
 import type { StudyGroup } from '@studybuddy/shared';
 
+function InviteModal({ group, onClose }: { group: StudyGroup; onClose: () => void }) {
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const inviteLink = `${window.location.origin}/dashboard?tab=social&join=${group.inviteCode}`;
+
+  function copy(text: string, which: 'link' | 'code') {
+    navigator.clipboard.writeText(text).then(() => {
+      if (which === 'link') { setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); }
+      else { setCopiedCode(true); setTimeout(() => setCopiedCode(false), 2000); }
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 space-y-4"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">Invite to {group.name}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Share the link or code below</p>
+          </div>
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Invite link */}
+        <div>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Invite link</p>
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2">
+            <span className="text-xs text-slate-600 dark:text-slate-300 flex-1 truncate font-mono">{inviteLink}</span>
+            <button
+              onClick={() => copy(inviteLink, 'link')}
+              className={`shrink-0 text-xs font-medium px-2 py-1 rounded transition-colors ${
+                copiedLink
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
+              }`}
+            >
+              {copiedLink ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+
+        {/* Invite code */}
+        <div>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Or share the code</p>
+          <div className="flex items-center gap-3">
+            <span className="flex-1 text-center font-mono text-xl font-bold tracking-widest text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 rounded-lg py-2.5">
+              {group.inviteCode}
+            </span>
+            <button
+              onClick={() => copy(group.inviteCode, 'code')}
+              className={`shrink-0 text-xs font-medium px-3 py-2 rounded-lg border transition-colors ${
+                copiedCode
+                  ? 'border-emerald-300 text-emerald-600 bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:bg-emerald-900/20'
+                  : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-blue-300 hover:text-blue-600 dark:hover:border-blue-600 dark:hover:text-blue-400'
+              }`}
+            >
+              {copiedCode ? '✓ Copied' : 'Copy code'}
+            </button>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center">
+          Anyone with this link or code can join {group.name}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 interface GroupListProps {
   selectedGroupId: string | null;
   onSelectGroup: (id: string | null) => void;
@@ -18,7 +94,7 @@ export function GroupList({ selectedGroupId, onSelectGroup }: GroupListProps) {
   const [createName, setCreateName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [inviteGroup, setInviteGroup] = useState<StudyGroup | null>(null);
   const { showToast } = useToast();
 
   function openMode(m: 'create' | 'join') {
@@ -67,13 +143,6 @@ export function GroupList({ selectedGroupId, onSelectGroup }: GroupListProps) {
     if (!confirmed) return;
     if (selectedGroupId === group._id) onSelectGroup(null);
     await leaveGroup.mutateAsync(group._id);
-  }
-
-  function copyCode(code: string, id: string) {
-    navigator.clipboard.writeText(code).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 1500);
-    });
   }
 
   if (isLoading) {
@@ -163,19 +232,13 @@ export function GroupList({ selectedGroupId, onSelectGroup }: GroupListProps) {
               </div>
               <div className="flex items-center gap-1 shrink-0 ml-2">
                 <button
-                  onClick={e => { e.stopPropagation(); copyCode(group.inviteCode, group._id); }}
+                  onClick={e => { e.stopPropagation(); setInviteGroup(group); }}
                   className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
-                  title="Copy invite code"
+                  title="Invite members"
                 >
-                  {copiedId === group._id ? (
-                    <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                  )}
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
                 </button>
                 <button
                   onClick={e => handleLeave(e, group)}
@@ -191,6 +254,8 @@ export function GroupList({ selectedGroupId, onSelectGroup }: GroupListProps) {
           ))
         )}
       </div>
+
+      {inviteGroup && <InviteModal group={inviteGroup} onClose={() => setInviteGroup(null)} />}
     </div>
   );
 }

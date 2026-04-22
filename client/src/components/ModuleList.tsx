@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Module, ModuleDeadline } from '@studybuddy/shared';
 import {
   useModules,
@@ -47,12 +48,13 @@ interface ModuleFormState {
   fullName: string;
   colour: string;
   language: string;
+  university: string;
   weeklyTargetHours: string;
   topics: string;
 }
 
 const defaultForm: ModuleFormState = {
-  name: '', fullName: '', colour: '#3B82F6', language: 'en', weeklyTargetHours: '3', topics: '',
+  name: '', fullName: '', colour: '#3B82F6', language: 'en', university: '', weeklyTargetHours: '3', topics: '',
 };
 
 interface DeadlineFormState {
@@ -73,6 +75,7 @@ function moduleToForm(mod: Module): ModuleFormState {
     fullName: mod.fullName ?? '',
     colour: mod.colour,
     language: mod.language ?? 'en',
+    university: mod.university ?? '',
     weeklyTargetHours: String(mod.weeklyTargetHours ?? 3),
     topics: (mod.topics ?? []).join('\n'),
   };
@@ -102,6 +105,7 @@ function ModuleModal({
       fullName: form.fullName.trim() || undefined,
       colour: form.colour,
       language: form.language,
+      university: form.university.trim() || undefined,
       weeklyTargetHours: form.weeklyTargetHours ? Number(form.weeklyTargetHours) : undefined,
       topics: form.topics ? form.topics.split('\n').map(t => t.trim()).filter(Boolean) : undefined,
     };
@@ -131,6 +135,13 @@ function ModuleModal({
             value={form.fullName}
             onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
             maxLength={100}
+          />
+          <input
+            className={inputCls}
+            placeholder="University (e.g. University of London)"
+            value={form.university}
+            onChange={e => setForm(f => ({ ...f, university: e.target.value }))}
+            maxLength={120}
           />
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Colour</p>
@@ -305,8 +316,21 @@ function ModuleCard({ module }: { module: Module }) {
       </div>
 
       <div className="pr-20">
-        <p className="font-semibold text-slate-800 dark:text-slate-100">{module.name}</p>
+        <Link
+          to={`/modules/${module._id}`}
+          className="font-semibold text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          {module.name}
+        </Link>
         {module.fullName && <p className="text-sm text-slate-500 dark:text-slate-400">{module.fullName}</p>}
+        {module.university && (
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
+            <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m0-6l-3.5-1.944M12 20l-3.5-1.944M12 20l3.5-1.944" />
+            </svg>
+            {module.university}
+          </p>
+        )}
       </div>
 
       {module.topics && module.topics.length > 0 && (

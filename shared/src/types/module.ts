@@ -1,3 +1,11 @@
+export interface ModuleResource {
+  _id: string;
+  type: 'youtube' | 'url' | 'pdf' | 'book' | 'note';
+  title: string;
+  url: string;
+  addedAt: string;
+}
+
 export interface ModuleDeadline {
   _id: string;
   title: string;
@@ -17,11 +25,21 @@ export interface Module {
   fullName: string;
   colour: string;
   language: string;
+  university: string;
   topics: string[];
   topicProgress: Record<string, TopicConfidence>;
   weeklyTargetHours: number;
   deadlines: ModuleDeadline[];
   notes: string | null;
+  resources: ModuleResource[];
   archived: boolean;
+  shareWithCommunity: boolean;
   createdAt: string;
+}
+
+export interface CommunityModuleData {
+  contributorCount: number;
+  resources: ModuleResource[];
+  topics: string[];
+  fullName: string;
 }

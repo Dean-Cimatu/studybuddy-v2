@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useModules } from '../hooks/useModules';
 import { useDashboardStats } from '../hooks/useStats';
@@ -22,6 +22,7 @@ import type { Module, ModuleDeadline } from '@studybuddy/shared';
 
 const TABS = [
   { id: 'home', label: 'Home' },
+  { id: 'modules', label: 'Modules' },
   { id: 'planner', label: 'Planner' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'social', label: 'Groups' },
@@ -72,6 +73,7 @@ function UpcomingDeadlines({ modules }: { modules: Module[] }) {
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [calendarToast, setCalendarToast] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -93,6 +95,7 @@ export function DashboardPage() {
   const activeTab = TABS.some(t => t.id === rawTab) ? rawTab : 'home';
 
   function setTab(id: string) {
+    if (id === 'modules') { navigate('/modules'); return; }
     setSearchParams({ tab: id }, { replace: true });
   }
 

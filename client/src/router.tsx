@@ -5,6 +5,8 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { StatsPage } from './pages/StatsPage';
+import { ModulePage } from './pages/ModulePage';
+import { ModulesListPage } from './pages/ModulesListPage';
 
 export const router = createBrowserRouter([
   { path: '/',          element: <Navigate to="/dashboard" replace /> },
@@ -31,6 +33,22 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <StatsPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/modules',
+    element: (
+      <ProtectedRoute>
+        <ModulesListPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/modules/:id',
+    element: (
+      <ProtectedRoute>
+        <ModulePage />
       </ProtectedRoute>
     ),
   },

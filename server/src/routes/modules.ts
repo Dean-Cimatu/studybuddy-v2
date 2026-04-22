@@ -12,6 +12,7 @@ const moduleSchema = z.object({
   fullName: z.string().max(100).optional(),
   colour: z.string().regex(hexColour, 'Invalid hex colour').optional(),
   language: z.string().max(10).optional(),
+  university: z.string().max(120).optional(),
   topics: z.array(z.string()).optional(),
   weeklyTargetHours: z.number().min(0).max(40).optional(),
 });
@@ -20,6 +21,38 @@ const updateSchema = moduleSchema.extend({
   name: z.string().min(1).max(50).optional(),
   notes: z.string().max(2000).nullable().optional(),
   archived: z.boolean().optional(),
+  shareWithCommunity: z.boolean().optional(),
+});
+
+// GET /api/modules/community?university=X&code=Y
+router.get('/community', requireAuth, async (req: Request, res: Response) => {
+  const university = (req.query.university as string | undefined)?.trim();
+  const code = (req.query.code as string | undefined)?.trim();
+  if (!university || !code) {
+    return res.status(400).json({ error: 'university and code are required' });
+  }
+  try {
+    const matches = await ModuleModel.find({
+      name: { $regex: new RegExp(`^${code}$`, 'i') },
+      university: { $regex: new RegExp(`^${university}$`, 'i') },
+      shareWithCommunity: true,
+      userId: { $ne: req.user!._id },
+    }).select('resources topics fullName').lean();
+
+    const resources = matches.flatMap(m => m.resources);
+    const topicSet = new Set<string>();
+    for (const m of matches) for (const t of m.topics) topicSet.add(t);
+
+    return res.json({
+      contributorCount: matches.length,
+      resources,
+      topics: Array.from(topicSet),
+      fullName: matches.find(m => m.fullName)?.fullName ?? '',
+    });
+  } catch (err) {
+    console.error('Community modules error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // GET /api/modules
@@ -198,6 +231,46 @@ router.patch('/:id/topic-progress', requireAuth, async (req: Request, res: Respo
     return res.json({ module });
   } catch (err) {
     console.error('Topic progress error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+const resourceSchema = z.object({
+  type: z.enum(['youtube', 'url', 'pdf', 'book', 'note']),
+  title: z.string().min(1).max(200),
+  url: z.string().url().max(2000),
+});
+
+// POST /api/modules/:id/resource
+router.post('/:id/resource', requireAuth, async (req: Request, res: Response) => {
+  const parsed = resourceSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid input' });
+  }
+  try {
+    const module = await ModuleModel.findOne({ _id: req.params.id, userId: req.user!._id });
+    if (!module) return res.status(404).json({ error: 'Module not found' });
+    module.resources.push({ ...parsed.data, addedAt: new Date() } as never);
+    await module.save();
+    return res.status(201).json({ module });
+  } catch (err) {
+    console.error('Add resource error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/modules/:id/resource/:resourceId
+router.delete('/:id/resource/:resourceId', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const module = await ModuleModel.findOne({ _id: req.params.id, userId: req.user!._id });
+    if (!module) return res.status(404).json({ error: 'Module not found' });
+    const before = module.resources.length;
+    module.resources = module.resources.filter(r => r._id.toString() !== req.params.resourceId) as never;
+    if (module.resources.length === before) return res.status(404).json({ error: 'Resource not found' });
+    await module.save();
+    return res.json({ module });
+  } catch (err) {
+    console.error('Delete resource error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

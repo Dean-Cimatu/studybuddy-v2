@@ -35,7 +35,7 @@ export interface FlashcardCard {
 
 // ── Module ────────────────────────────────────────────────────────────────────
 
-export type { Module, ModuleDeadline, TopicConfidence } from './types/module';
+export type { Module, ModuleDeadline, ModuleResource, TopicConfidence, CommunityModuleData } from './types/module';
 
 // ── Study Session & Stats ─────────────────────────────────────────────────────
 

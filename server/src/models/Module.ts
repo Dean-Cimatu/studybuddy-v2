@@ -10,18 +10,29 @@ export interface ModuleDeadlineDocument {
   completed: boolean;
 }
 
+export interface ModuleResourceDocument {
+  _id: mongoose.Types.ObjectId;
+  type: 'youtube' | 'url' | 'pdf' | 'book' | 'note';
+  title: string;
+  url: string;
+  addedAt: Date;
+}
+
 export interface ModuleDocument extends Document {
   userId: mongoose.Types.ObjectId;
   name: string;
   fullName: string;
   colour: string;
   language: string;
+  university: string;
   topics: string[];
   topicProgress: Map<string, string>;
   weeklyTargetHours: number;
   deadlines: ModuleDeadlineDocument[];
   notes: string | null;
+  resources: ModuleResourceDocument[];
   archived: boolean;
+  shareWithCommunity: boolean;
 }
 
 const deadlineSchema = new Schema<ModuleDeadlineDocument>({
@@ -33,6 +44,13 @@ const deadlineSchema = new Schema<ModuleDeadlineDocument>({
   completed: { type: Boolean, default: false },
 });
 
+const resourceSchema = new Schema<ModuleResourceDocument>({
+  type: { type: String, enum: ['youtube', 'url', 'pdf', 'book', 'note'], required: true },
+  title: { type: String, required: true, maxlength: 200 },
+  url: { type: String, required: true, maxlength: 2000 },
+  addedAt: { type: Date, default: Date.now },
+});
+
 const moduleSchema = new Schema<ModuleDocument>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -40,12 +58,15 @@ const moduleSchema = new Schema<ModuleDocument>(
     fullName: { type: String, default: '' },
     colour: { type: String, default: '#3B82F6' },
     language: { type: String, default: 'en' },
+    university: { type: String, default: '' },
     topics: { type: [String], default: [] },
     topicProgress: { type: Map, of: String, default: {} },
     weeklyTargetHours: { type: Number, default: 3, min: 0, max: 40 },
     deadlines: { type: [deadlineSchema], default: [] },
     notes: { type: String, default: null },
+    resources: { type: [resourceSchema], default: [] },
     archived: { type: Boolean, default: false },
+    shareWithCommunity: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
