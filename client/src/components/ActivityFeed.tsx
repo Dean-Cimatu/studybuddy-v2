@@ -76,10 +76,10 @@ function ThumbUpIcon({ filled }: { filled: boolean }) {
 function FeedSkeleton() {
   return (
     <div className="flex gap-3 animate-pulse px-4 py-3">
-      <div className="w-8 h-8 rounded-full bg-slate-700 shrink-0" />
+      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
       <div className="flex-1 space-y-2 pt-1">
-        <div className="h-3 bg-slate-700 rounded-full w-3/4" />
-        <div className="h-2.5 bg-slate-700/60 rounded-full w-1/3" />
+        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full w-3/4" />
+        <div className="h-2.5 bg-slate-100 dark:bg-slate-700/60 rounded-full w-1/3" />
       </div>
     </div>
   );
@@ -92,28 +92,28 @@ function FeedRow({ item, groupId, currentUserId }: { item: FeedItem; groupId: st
   const count = item.reactions.length;
 
   return (
-    <div className="flex gap-3 px-4 py-3 hover:bg-slate-800/40 transition-colors group">
+    <div className="flex gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
       <div className={`w-8 h-8 rounded-full ${avatarColour(item.userName)} flex items-center justify-center text-[11px] font-bold text-white shrink-0 mt-0.5`}>
         {initials(item.userName)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-slate-200 leading-snug">
-          <span className="font-semibold text-slate-100">{item.userName}</span>
+        <p className="text-sm text-slate-700 dark:text-slate-200 leading-snug">
+          <span className="font-semibold text-slate-900 dark:text-slate-100">{item.userName}</span>
           {' '}
-          <span className="text-slate-400">{verb}</span>
+          <span className="text-slate-500 dark:text-slate-400">{verb}</span>
           {detail && (
-            <span className="ml-1 text-xs font-medium text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-md">{detail}</span>
+            <span className="ml-1 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/10 px-1.5 py-0.5 rounded-md">{detail}</span>
           )}
         </p>
         <div className="flex items-center gap-3 mt-1.5">
-          <span className="text-[11px] text-slate-600">{timeAgo(item.createdAt)}</span>
+          <span className="text-[11px] text-slate-400">{timeAgo(item.createdAt)}</span>
           <button
             onClick={() => react.mutate({ groupId, itemId: item._id })}
             disabled={react.isPending}
             className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
               hasReacted
-                ? 'text-blue-400'
-                : 'text-slate-600 hover:text-blue-400 opacity-0 group-hover:opacity-100'
+                ? 'text-blue-500 dark:text-blue-400'
+                : 'text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100'
             }`}
           >
             <ThumbUpIcon filled={hasReacted} />
@@ -141,19 +141,19 @@ export function ActivityFeed({ groupId }: ActivityFeedProps) {
   if (!items || items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
-          <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
         </div>
-        <p className="text-sm text-slate-400 font-medium">No activity yet</p>
-        <p className="text-xs text-slate-600 mt-0.5">Log a session to get things going</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No activity yet</p>
+        <p className="text-xs text-slate-400 mt-0.5">Log a session to get things going</p>
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-slate-800/40 overflow-y-auto max-h-[420px]">
+    <div className="divide-y divide-slate-100 dark:divide-slate-800/40 overflow-y-auto max-h-[420px]">
       {items.map(item => (
         <FeedRow key={item._id} item={item} groupId={groupId} currentUserId={currentUserId} />
       ))}

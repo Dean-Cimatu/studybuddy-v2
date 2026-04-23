@@ -229,12 +229,12 @@ export function DashboardPage() {
 
                     {/* Leaderboard + Feed */}
                     <div className="flex gap-4">
-                      <div className="w-72 shrink-0 rounded-xl bg-slate-800/30 border border-slate-700/40 p-4">
+                      <div className="w-72 shrink-0 rounded-xl bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/40 p-4">
                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Leaderboard</p>
                         <GroupMemberStatus groupId={selectedGroupId} />
                       </div>
-                      <div className="flex-1 min-w-0 rounded-xl bg-slate-800/30 border border-slate-700/40 overflow-hidden">
-                        <div className="px-4 py-3 border-b border-slate-700/40">
+                      <div className="flex-1 min-w-0 rounded-xl bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/40 overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700/40">
                           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Activity</p>
                         </div>
                         <ActivityFeed groupId={selectedGroupId} />
